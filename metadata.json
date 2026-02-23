@@ -1,0 +1,7 @@
+{
+  "name": "Siswa Terlambat Hadir",
+  "description": "Sistem informasi manajemen absensi keterlambatan siswa yang elegan dan fungsional dengan fitur backup/restore, laporan grafik, dan ekspor excel.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
