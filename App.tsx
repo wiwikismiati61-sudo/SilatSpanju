@@ -28,10 +28,13 @@ const INITIAL_DATA: AppData = {
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Dashboard);
   const [data, setData] = useState<AppData>(INITIAL_DATA);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '', role: 'Operator' });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const isOperator = userRole === 'Operator';
+  const isAuthenticated = userRole !== null;
 
   // Load data from localStorage
   useEffect(() => {
@@ -58,17 +61,23 @@ const App: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.username === data.user.username && loginForm.password === data.user.password) {
-      setIsLoggedIn(true);
-      setShowLoginModal(false);
-      setLoginForm({ username: '', password: '' });
+    if (loginForm.role === 'Operator') {
+      if (loginForm.username === data.user.username && loginForm.password === data.user.password) {
+        setUserRole('Operator');
+        setShowLoginModal(false);
+        setLoginForm({ username: '', password: '', role: 'Operator' });
+      } else {
+        alert("Username atau Password salah!");
+      }
     } else {
-      alert("Username atau Password salah!");
+      setUserRole(loginForm.role);
+      setShowLoginModal(false);
+      setLoginForm({ username: '', password: '', role: 'Operator' });
     }
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    setUserRole(null);
     setActiveTab(Tab.Dashboard);
   };
 
@@ -87,11 +96,11 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case Tab.Dashboard:
-        return <DashboardView data={data} currentTime={currentTime} />;
+        return <DashboardView data={data} currentTime={currentTime} isLoggedIn={isOperator} updateData={updateAppData} />;
       case Tab.Absensi:
         return <AbsensiView data={data} onAddRecord={(record) => updateAppData({ attendance: [record, ...data.attendance] })} />;
       case Tab.Operator:
-        return isLoggedIn ? (
+        return isOperator ? (
           <OperatorView data={data} updateData={updateAppData} setActiveTab={setActiveTab} />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -107,13 +116,13 @@ const App: React.FC = () => {
           </div>
         );
       case Tab.Report:
-        return isLoggedIn ? (
+        return isOperator || userRole === 'Kepala Sekolah' || userRole === 'Guru' ? (
           <ReportView data={data} updateData={updateAppData} />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
             <ShieldCheck size={64} className="text-slate-300 mb-4" />
             <h2 className="text-2xl font-bold text-slate-800">Akses Terbatas</h2>
-            <p className="text-slate-500 mb-6">Hanya Operator yang dapat mengakses menu laporan.</p>
+            <p className="text-slate-500 mb-6">Hanya Operator, Kepala Sekolah, dan Guru yang dapat mengakses menu laporan.</p>
             <button 
               onClick={() => setShowLoginModal(true)}
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
@@ -151,14 +160,19 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {isLoggedIn ? (
-                <button 
-                  onClick={handleLogout}
-                  className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
-                >
-                  <LogOut size={18} className="mr-2" />
-                  Logout
-                </button>
+              {isAuthenticated ? (
+                <div className="flex items-center gap-3">
+                  <span className="hidden md:block text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
+                    {userRole}
+                  </span>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                  >
+                    <LogOut size={18} className="mr-2" />
+                    Logout
+                  </button>
+                </div>
               ) : (
                 <button 
                   onClick={() => setShowLoginModal(true)}
@@ -220,30 +234,50 @@ const App: React.FC = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full mb-4">
                 <ShieldCheck size={32} />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">Operator Login</h2>
-              <p className="text-slate-500">Gunakan username dan password admin</p>
+              <h2 className="text-2xl font-bold text-slate-900">Login Sistem</h2>
+              <p className="text-slate-500">Pilih peran Anda untuk masuk</p>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                <input 
-                  type="text" 
-                  required
-                  value={loginForm.username}
-                  onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                <label className="block text-sm font-medium text-slate-700 mb-1">Masuk Sebagai</label>
+                <select 
+                  value={loginForm.role}
+                  onChange={(e) => setLoginForm({ ...loginForm, role: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                />
+                >
+                  <option value="Operator">Operator</option>
+                  <option value="Kepala Sekolah">Kepala Sekolah</option>
+                  <option value="Guru">Guru</option>
+                  <option value="Orang Tua">Orang Tua</option>
+                  <option value="Siswa">Siswa</option>
+                </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                <input 
-                  type="password" 
-                  required
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                />
-              </div>
+              
+              {loginForm.role === 'Operator' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={loginForm.username}
+                      onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input 
+                      type="password" 
+                      required
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                    />
+                  </div>
+                </>
+              )}
+              
               <button 
                 type="submit"
                 className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
