@@ -73,8 +73,15 @@ const App: React.FC = () => {
   // Save data to API whenever it changes
   useEffect(() => {
     const saveData = async () => {
-      // Don't save initial empty data immediately to avoid overwriting DB on load
+      // Don't save if data is empty and hasn't been loaded yet
       if (data === INITIAL_DATA) return;
+      
+      // Prevent saving empty data if it was already populated
+      if (data.students.length === 0 && data.attendance.length === 0 && data.user.username === 'admin') {
+         // It might be a reset, but let's be careful not to overwrite the DB with empty data
+         // unless explicitly requested. For now, we'll allow it but log it.
+         console.log("Saving potentially empty data to API");
+      }
       
       try {
         await fetch('/api/data', {
@@ -92,7 +99,10 @@ const App: React.FC = () => {
       localStorage.setItem('absensi_db', JSON.stringify(data));
     };
     
-    saveData();
+    // Only save if we have actual data (not just the initial state)
+    if (data !== INITIAL_DATA) {
+      saveData();
+    }
   }, [data]);
 
   const handleLogin = (e: React.FormEvent) => {
