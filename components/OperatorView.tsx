@@ -181,6 +181,27 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
     e.target.value = '';
   };
 
+  const handleSaveToVercel = async () => {
+    try {
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (response.ok) {
+        alert("Data berhasil disimpan ke Vercel secara permanen!");
+      } else {
+        alert("Gagal menyimpan data ke Vercel. Pastikan Vercel KV sudah aktif.");
+      }
+    } catch (error) {
+      console.error("Error saving to Vercel:", error);
+      alert("Terjadi kesalahan saat menyimpan data ke Vercel.");
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fadeIn">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -338,6 +359,12 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
                 className="w-full flex items-center justify-center px-4 py-3 border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition"
               >
                 <Upload size={20} className="mr-3" /> Restore Full (.json)
+              </button>
+              <button 
+                onClick={handleSaveToVercel}
+                className="w-full flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-md shadow-indigo-200"
+              >
+                <Database size={20} className="mr-3" /> Simpan ke Vercel (Online)
               </button>
               <input type="file" ref={restoreInputRef} className="hidden" accept=".json" onChange={handleRestore} />
             </div>
