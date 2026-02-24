@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState, useRef } from 'react';
-import { Users, UserX, Clock, CalendarCheck, PhoneCall, CheckCircle2, Edit2, Trash2, Download, Upload } from 'lucide-react';
+import { Users, UserX, Clock, CalendarCheck, PhoneCall, CheckCircle2, Edit2, Trash2, Download, Upload, AlertTriangle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { AppData, Student, AttendanceRecord } from '../types';
 
@@ -15,14 +15,32 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [editForm, setEditForm] = useState({ time: '', status: 'Terlambat', reason: '' });
   const [selectedDate, setSelectedDate] = useState<string>(currentTime.toISOString().split('T')[0]);
+  const [dailyReportDate, setDailyReportDate] = useState<string>(currentTime.toISOString().split('T')[0]);
+  const [summaryStartDate, setSummaryStartDate] = useState<string>(currentTime.toISOString().split('T')[0]);
+  const [summaryEndDate, setSummaryEndDate] = useState<string>(currentTime.toISOString().split('T')[0]);
+  const [isRemovingDuplicates, setIsRemovingDuplicates] = useState(false);
+  const [showConfirmDuplicate, setShowConfirmDuplicate] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dailyFileInputRef = useRef<HTMLInputElement>(null);
   const today = currentTime.toISOString().split('T')[0];
   const attendance = data.attendance || [];
   const students = data.students || [];
 
-  const todayAttendance = attendance.filter(r => r.date && r.date.startsWith(today));
-  const lateCount = todayAttendance.filter(r => r.status === 'Terlambat').length;
-  const onTimeCount = todayAttendance.filter(r => r.status === 'Tepat Waktu').length;
+  const todayAttendance = attendance.filter(r => r.date && r.date.startsWith(dailyReportDate));
+  
+  const summaryAttendance = useMemo(() => {
+    const start = new Date(summaryStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(summaryEndDate);
+    end.setHours(23, 59, 59, 999);
+    return attendance.filter(r => {
+      const recordDate = new Date(r.date);
+      return recordDate >= start && recordDate <= end;
+    });
+  }, [attendance, summaryStartDate, summaryEndDate]);
+
+  const lateCount = summaryAttendance.filter(r => r.status === 'Terlambat').length;
+  const onTimeCount = summaryAttendance.filter(r => r.status === 'Tepat Waktu').length;
 
   const parentCallList = useMemo(() => {
     const lateRecords = attendance.filter(r => r.status === 'Terlambat');
@@ -41,6 +59,99 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
       .filter((item): item is Student & { lateCount: number } => item !== null)
       .sort((a, b) => b.lateCount - a.lateCount);
   }, [attendance, students]);
+
+  const duplicateRecords = useMemo(() => {
+    const map = new Map<string, AttendanceRecord[]>();
+    attendance.forEach(r => {
+      const dateStr = r.date ? String(r.date).split('T')[0] : '';
+      const studentName = String(r.studentName || '').trim().toLowerCase();
+      const className = String(r.className || '').trim().toLowerCase();
+      const key = `${dateStr}_${studentName}_${className}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(r);
+    });
+
+    const duplicates: AttendanceRecord[][] = [];
+    map.forEach(records => {
+      if (records.length > 1) {
+        duplicates.push(records);
+      }
+    });
+    return duplicates;
+  }, [attendance]);
+
+  const executeRemoveDuplicates = () => {
+    if (!updateData) return;
+    setIsRemovingDuplicates(true);
+
+    setTimeout(() => {
+      try {
+        const map = new Map<string, AttendanceRecord[]>();
+        const currentAttendance = data.attendance || [];
+        
+        currentAttendance.forEach(r => {
+          const dateStr = r.date ? String(r.date).split('T')[0] : '';
+          const studentName = String(r.studentName || '').trim().toLowerCase();
+          const className = String(r.className || '').trim().toLowerCase();
+          const key = `${dateStr}_${studentName}_${className}`;
+          
+          if (!map.has(key)) {
+            map.set(key, []);
+          }
+          map.get(key)!.push(r);
+        });
+
+        const newAttendance: AttendanceRecord[] = [];
+        let removedCount = 0;
+
+        map.forEach(records => {
+          if (records.length === 1) {
+            newAttendance.push(records[0]);
+          } else {
+            // Sort records to prioritize those with valid time
+            const sortedRecords = [...records].sort((a, b) => {
+              const aValid = a.time && a.time !== '00:00' ? 1 : 0;
+              const bValid = b.time && b.time !== '00:00' ? 1 : 0;
+              if (aValid !== bValid) {
+                return bValid - aValid;
+              }
+              if (aValid && bValid) {
+                return a.time.localeCompare(b.time);
+              }
+              return 0;
+            });
+            
+            newAttendance.push(sortedRecords[0]);
+            removedCount += (records.length - 1);
+          }
+        });
+
+        if (removedCount > 0) {
+          updateData({ attendance: newAttendance });
+          setTimeout(() => {
+            alert(`Berhasil menghapus ${removedCount} data double.`);
+          }, 100);
+        } else {
+          setTimeout(() => {
+            alert("Tidak ada data double yang ditemukan.");
+          }, 100);
+        }
+      } catch (error) {
+        console.error("Error removing duplicates:", error);
+        setTimeout(() => {
+          alert("Terjadi kesalahan saat menghapus data double.");
+        }, 100);
+      } finally {
+        setIsRemovingDuplicates(false);
+      }
+    }, 50);
+  };
+
+  const handleRemoveDuplicates = () => {
+    setShowConfirmDuplicate(true);
+  };
 
   const handleDelete = (id: string) => {
     if (confirm("Hapus data absensi ini?")) {
@@ -138,6 +249,27 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan Mingguan");
     XLSX.writeFile(wb, `Laporan_Mingguan_Terlambat_${new Date(selectedDate).toLocaleDateString('id-ID').replace(/\//g, '-')}.xlsx`);
+  };
+
+  const downloadDailyReport = () => {
+    if (todayAttendance.length === 0) {
+      alert('Tidak ada data absensi untuk tanggal ini.');
+      return;
+    }
+
+    const excelData = todayAttendance.map(r => ({
+      'Tanggal': new Date(r.date).toLocaleDateString('id-ID'),
+      'Waktu': r.time,
+      'Nama Siswa': r.studentName,
+      'Kelas': r.className,
+      'Status': r.status,
+      'Alasan': r.reason || '-'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan Harian");
+    XLSX.writeFile(wb, `Laporan_Harian_${new Date(dailyReportDate).toLocaleDateString('id-ID').replace(/\//g, '-')}.xlsx`);
   };
 
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,12 +379,23 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
     <div className="space-y-8 animate-fadeIn">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Ringkasan Hari Ini</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Ringkasan Siswa Terlambat</h2>
           <p className="text-slate-500">Pantau kehadiran siswa secara real-time</p>
         </div>
-        <div className="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center gap-3">
-          <CalendarCheck className="text-indigo-600" size={20} />
-          <span className="text-indigo-900 font-semibold">{currentTime.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+        <div className="flex items-center gap-2">
+          <input 
+            type="date" 
+            className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            value={summaryStartDate}
+            onChange={(e) => setSummaryStartDate(e.target.value)}
+          />
+          <span className="text-slate-500">-</span>
+          <input 
+            type="date" 
+            className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            value={summaryEndDate}
+            onChange={(e) => setSummaryEndDate(e.target.value)}
+          />
         </div>
       </div>
 
@@ -265,7 +408,7 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
         />
         <StatCard 
           icon={<UserX className="text-rose-600" />}
-          label="Terlambat Hari Ini"
+          label="Terlambat"
           value={lateCount}
           color="bg-rose-50"
         />
@@ -331,6 +474,91 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
             </div>
         )}
       </div>
+
+      {/* Duplicate Data Report Section */}
+      {isLoggedIn && (
+        <div className="bg-white border border-orange-200 rounded-2xl shadow-sm">
+          <div className="p-6 border-b border-orange-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 flex items-center justify-center bg-orange-50 text-orange-600 rounded-xl">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Report Data Double</h3>
+                <p className="text-sm text-slate-500">
+                  {duplicateRecords.length > 0 
+                    ? `Ditemukan ${duplicateRecords.length} siswa dengan data ganda pada hari yang sama.` 
+                    : 'Tidak ada data ganda yang ditemukan.'}
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={handleRemoveDuplicates}
+              disabled={isRemovingDuplicates || duplicateRecords.length === 0}
+              className={`flex items-center justify-center px-4 py-2 text-white text-sm font-bold rounded-lg transition shadow-sm whitespace-nowrap ${
+                isRemovingDuplicates || duplicateRecords.length === 0 
+                  ? 'bg-orange-400 cursor-not-allowed' 
+                  : 'bg-orange-600 hover:bg-orange-700'
+              }`}
+            >
+              {isRemovingDuplicates ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <Trash2 size={18} className="mr-2" /> Hapus Data Double
+                </>
+              )}
+            </button>
+          </div>
+          
+          {duplicateRecords.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-slate-700 font-bold">
+                      <tr>
+                          <th className="px-6 py-4">Tanggal</th>
+                          <th className="px-6 py-4">Nama Siswa</th>
+                          <th className="px-6 py-4">Kelas</th>
+                          <th className="px-6 py-4 text-center">Jumlah Data</th>
+                          <th className="px-6 py-4">Waktu Tercatat</th>
+                      </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                      {duplicateRecords.map((records, idx) => {
+                          const first = records[0];
+                          return (
+                          <tr key={idx} className="hover:bg-orange-50/50 transition-colors">
+                              <td className="px-6 py-4 font-medium text-slate-600">
+                                  {new Date(first.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                              </td>
+                              <td className="px-6 py-4 font-bold text-slate-900">{first.studentName}</td>
+                              <td className="px-6 py-4">
+                                  <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-xs">{first.className}</span>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                  <span className="text-sm font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded">{records.length}</span>
+                              </td>
+                              <td className="px-6 py-4 text-slate-500">
+                                  {records.map(r => r.time || '00:00').join(', ')}
+                              </td>
+                          </tr>
+                      )})}
+                  </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                <CheckCircle2 size={32} />
+              </div>
+              <p className="text-slate-600 font-medium">Semua data sudah bersih. Tidak ada data ganda (0 data).</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Weekly Report Section */}
       <div className="bg-white border border-indigo-100 rounded-2xl shadow-sm">
@@ -405,9 +633,36 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
 
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900">Log Kedatangan Hari Ini</h3>
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Terakhir update: {currentTime.toLocaleTimeString('id-ID')}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Laporan Hadir Terlambat Siswa</h3>
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Terakhir update: {currentTime.toLocaleTimeString('id-ID')}</span>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <input 
+              type="date" 
+              className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              value={dailyReportDate}
+              onChange={(e) => setDailyReportDate(e.target.value)}
+            />
+            {isLoggedIn && (
+              <>
+                <button 
+                  onClick={() => dailyFileInputRef.current?.click()}
+                  className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
+                >
+                  <Upload size={18} className="mr-2" /> Import
+                </button>
+                <input type="file" ref={dailyFileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleImportExcel} />
+              </>
+            )}
+            <button 
+              onClick={downloadDailyReport}
+              className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
+            >
+              <Download size={18} className="mr-2" /> Download
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
           <table className="w-full text-left text-sm">
@@ -469,13 +724,42 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
                 ))
               ) : (
                 <tr>
-                  <td colSpan={isLoggedIn ? 7 : 6} className="px-6 py-12 text-center text-slate-400">Belum ada data absensi untuk hari ini.</td>
+                  <td colSpan={isLoggedIn ? 7 : 6} className="px-6 py-12 text-center text-slate-400">Belum ada data absensi untuk tanggal ini.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {showConfirmDuplicate && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Data Double?</h3>
+            <p className="text-slate-500 mb-6 text-sm">Aksi ini akan menghapus semua data absensi ganda dan menyisakan 1 data yang paling valid untuk setiap siswa di hari yang sama.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowConfirmDuplicate(false)} 
+                className="flex-1 py-2.5 border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => {
+                  setShowConfirmDuplicate(false);
+                  executeRemoveDuplicates();
+                }} 
+                className="flex-1 py-2.5 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition shadow-sm"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingRecord && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
