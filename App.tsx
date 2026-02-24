@@ -36,27 +36,63 @@ const App: React.FC = () => {
   const isOperator = userRole === 'Operator';
   const isAuthenticated = userRole !== null;
 
-  // Load data from localStorage
+  // Load data from API
   useEffect(() => {
-    const savedData = localStorage.getItem('absensi_db');
-    if (savedData) {
+    const loadData = async () => {
       try {
-        const parsed = JSON.parse(savedData);
-        if (parsed && typeof parsed === 'object') {
-          setData(parsed);
+        const response = await fetch('/api/data');
+        if (response.ok) {
+          const parsed = await response.json();
+          if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+            setData(parsed);
+          }
         }
       } catch (e) {
-        console.error("Failed to parse local data", e);
+        console.error("Failed to load data from API", e);
+        // Fallback to local storage if API fails (e.g. offline)
+        const savedData = localStorage.getItem('absensi_db');
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            if (parsed && typeof parsed === 'object') {
+              setData(parsed);
+            }
+          } catch (err) {
+            console.error("Failed to parse local data", err);
+          }
+        }
       }
-    }
+    };
+    
+    loadData();
     
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Save data to localStorage whenever it changes
+  // Save data to API whenever it changes
   useEffect(() => {
-    localStorage.setItem('absensi_db', JSON.stringify(data));
+    const saveData = async () => {
+      // Don't save initial empty data immediately to avoid overwriting DB on load
+      if (data === INITIAL_DATA) return;
+      
+      try {
+        await fetch('/api/data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+      } catch (e) {
+        console.error("Failed to save data to API", e);
+      }
+      
+      // Also save to localStorage as backup
+      localStorage.setItem('absensi_db', JSON.stringify(data));
+    };
+    
+    saveData();
   }, [data]);
 
   const handleLogin = (e: React.FormEvent) => {
