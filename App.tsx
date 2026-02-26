@@ -32,6 +32,7 @@ const App: React.FC = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '', role: 'Operator' });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isOperator = userRole === 'Operator';
   const isAuthenticated = userRole !== null;
@@ -188,16 +189,22 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20">
             <div className="flex items-center">
-              <img src="https://iili.io/KDFk4fI.png" alt="Logo" className="h-12 w-auto mr-4 cursor-pointer" onClick={() => setActiveTab(Tab.Dashboard)} />
+              <button 
+                className="md:hidden mr-4 text-slate-500 hover:text-slate-700"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              </button>
+              <img src="https://iili.io/KDFk4fI.png" alt="Logo" className="h-10 sm:h-12 w-auto mr-2 sm:mr-4 cursor-pointer" onClick={() => setActiveTab(Tab.Dashboard)} />
               <div className="hidden md:block">
-                <h1 className="text-xl font-bold text-slate-900 leading-tight">Siswa Terlambat Hadir</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Siswa Terlambat Hadir</h1>
                 <p className="text-xs text-slate-500 font-medium">Sistem Informasi Monitoring Pendidikan</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-1 sm:space-x-4">
-              <div className="hidden sm:flex flex-col items-end mr-4 text-right">
-                <div className="flex items-center text-slate-700 font-semibold">
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="hidden sm:flex flex-col items-end mr-2 sm:mr-4 text-right">
+                <div className="flex items-center text-slate-700 font-semibold text-sm sm:text-base">
                   <Clock size={16} className="mr-2 text-indigo-500" />
                   {currentTime.toLocaleTimeString('id-ID')}
                 </div>
@@ -207,25 +214,25 @@ const App: React.FC = () => {
               </div>
 
               {isAuthenticated ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <span className="hidden md:block text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
                     {userRole}
                   </span>
                   <button 
                     onClick={handleLogout}
-                    className="flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                    className="flex items-center px-2 sm:px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
                   >
-                    <LogOut size={18} className="mr-2" />
-                    Logout
+                    <LogOut size={18} className="md:mr-2" />
+                    <span className="hidden md:block">Logout</span>
                   </button>
                 </div>
               ) : (
                 <button 
                   onClick={() => setShowLoginModal(true)}
-                  className="flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition"
+                  className="flex items-center px-2 sm:px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition"
                 >
-                  <LogIn size={18} className="mr-2" />
-                  Login
+                  <LogIn size={18} className="md:mr-2" />
+                  <span className="hidden md:block">Login</span>
                 </button>
               )}
             </div>
@@ -233,10 +240,10 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto md:px-6 lg:px-8 py-6 gap-6">
-        <aside className="w-full md:w-64 flex-shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 overflow-hidden sticky top-28">
-            <nav className="space-y-1">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+        <aside className={`fixed md:relative z-40 md:z-auto w-64 md:w-64 flex-shrink-0 bg-white md:bg-transparent h-full md:h-auto transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+          <div className="bg-white rounded-r-2xl md:rounded-2xl shadow-lg md:shadow-sm border border-slate-200 p-2 h-full md:sticky md:top-28">
+            <nav className="space-y-1 mt-16 md:mt-0">
               {[
                 { id: Tab.Dashboard, icon: LayoutDashboard, label: 'Beranda' },
                 { id: Tab.Absensi, icon: ClipboardCheck, label: 'Absensi Siswa' },
@@ -245,7 +252,7 @@ const App: React.FC = () => {
               ].map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id as Tab)}
+                  onClick={() => { setActiveTab(item.id as Tab); setIsMenuOpen(false); }}
                   className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                     activeTab === item.id 
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
@@ -260,11 +267,13 @@ const App: React.FC = () => {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-8 min-h-[calc(100vh-12rem)]">
-            {renderContent()}
-          </div>
-        </main>
+        <div className="flex-1 flex flex-col w-full md:px-6 lg:px-8 py-6 gap-6">
+          <main className="flex-1 min-w-0 px-4 sm:px-0">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-8 min-h-[calc(100vh-12rem)]">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
       </div>
 
       {showLoginModal && (
