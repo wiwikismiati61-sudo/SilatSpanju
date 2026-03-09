@@ -187,51 +187,51 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20">
+          <div className="flex justify-between h-14 sm:h-16">
             <div className="flex items-center">
               <button 
-                className="md:hidden mr-4 text-slate-500 hover:text-slate-700"
+                className="md:hidden mr-2 sm:mr-4 text-slate-500 hover:text-slate-700"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
               </button>
-              <img src="https://iili.io/KDFk4fI.png" alt="Logo" className="h-10 sm:h-12 w-auto mr-2 sm:mr-4 cursor-pointer" onClick={() => setActiveTab(Tab.Dashboard)} />
+              <img src="https://iili.io/KDFk4fI.png" alt="Logo" className="h-8 sm:h-10 w-auto mr-2 sm:mr-3 cursor-pointer" onClick={() => setActiveTab(Tab.Dashboard)} />
               <div className="hidden md:block">
-                <h1 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">Siswa Terlambat Hadir</h1>
-                <p className="text-xs text-slate-500 font-medium">Sistem Informasi Monitoring Pendidikan</p>
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">Siswa Terlambat Hadir</h1>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Sistem Informasi Monitoring Pendidikan</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-1 sm:space-x-2">
               <div className="hidden sm:flex flex-col items-end mr-2 sm:mr-4 text-right">
-                <div className="flex items-center text-slate-700 font-semibold text-sm sm:text-base">
-                  <Clock size={16} className="mr-2 text-indigo-500" />
+                <div className="flex items-center text-slate-700 font-semibold text-xs sm:text-sm">
+                  <Clock size={14} className="mr-1 sm:mr-2 text-indigo-500" />
                   {currentTime.toLocaleTimeString('id-ID')}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-[10px] sm:text-xs text-slate-500">
                   {currentTime.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 </div>
               </div>
 
               {isAuthenticated ? (
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="hidden md:block text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
+                  <span className="hidden md:block text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
                     {userRole}
                   </span>
                   <button 
                     onClick={handleLogout}
-                    className="flex items-center px-2 sm:px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                    className="flex items-center px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
                   >
-                    <LogOut size={18} className="md:mr-2" />
+                    <LogOut size={16} className="md:mr-2" />
                     <span className="hidden md:block">Logout</span>
                   </button>
                 </div>
               ) : (
                 <button 
                   onClick={() => setShowLoginModal(true)}
-                  className="flex items-center px-2 sm:px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition"
+                  className="flex items-center px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition"
                 >
-                  <LogIn size={18} className="md:mr-2" />
+                  <LogIn size={16} className="md:mr-2" />
                   <span className="hidden md:block">Login</span>
                 </button>
               )}
@@ -241,9 +241,9 @@ const App: React.FC = () => {
       </nav>
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        <aside className={`fixed md:relative z-40 md:z-auto w-64 md:w-64 flex-shrink-0 bg-white md:bg-transparent h-full md:h-auto transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-          <div className="bg-white rounded-r-2xl md:rounded-2xl shadow-lg md:shadow-sm border border-slate-200 p-2 h-full md:sticky md:top-28">
-            <nav className="space-y-1 mt-16 md:mt-0">
+        <aside className={`fixed md:relative z-40 md:z-auto w-48 md:w-52 flex-shrink-0 bg-white md:bg-transparent h-full md:h-auto transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+          <div className="bg-white rounded-r-2xl md:rounded-2xl shadow-lg md:shadow-sm border border-slate-200 p-1 sm:p-2 h-full md:sticky md:top-20">
+            <nav className="space-y-1 mt-14 md:mt-0">
               {[
                 { id: Tab.Dashboard, icon: LayoutDashboard, label: 'Beranda' },
                 { id: Tab.Absensi, icon: ClipboardCheck, label: 'Absensi Siswa' },
@@ -253,13 +253,13 @@ const App: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id as Tab); setIsMenuOpen(false); }}
-                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
+                  className={`w-full flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-xl transition-all duration-200 ${
                     activeTab === item.id 
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
                       : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600'
                   }`}
                 >
-                  <item.icon size={20} className="mr-3" />
+                  <item.icon size={16} className="mr-2 sm:mr-3 sm:w-[18px] sm:h-[18px]" />
                   {item.label}
                 </button>
               ))}
@@ -267,9 +267,9 @@ const App: React.FC = () => {
           </div>
         </aside>
 
-        <div className="flex-1 flex flex-col w-full md:px-6 lg:px-8 py-6 gap-6">
-          <main className="flex-1 min-w-0 px-4 sm:px-0">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-8 min-h-[calc(100vh-12rem)]">
+        <div className="flex-1 flex flex-col w-full md:px-3 lg:px-4 py-3 sm:py-4 gap-3 sm:gap-4">
+          <main className="flex-1 min-w-0 px-2 sm:px-0">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 sm:p-4 min-h-[calc(100vh-10rem)]">
               {renderContent()}
             </div>
           </main>

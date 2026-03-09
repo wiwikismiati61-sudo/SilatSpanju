@@ -165,33 +165,33 @@ const ReportView: React.FC<Props> = ({ data }) => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6 animate-fadeIn">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Report Siswa Terlambat</h2>
-          <p className="text-slate-500 text-sm">Rekapitulasi keterlambatan siswa per kelas</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Report Siswa Terlambat</h2>
+          <p className="text-slate-500 text-xs sm:text-sm">Rekapitulasi keterlambatan siswa per kelas</p>
         </div>
         <button 
           onClick={handleExportToExcel}
-          className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-100"
+          className="flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-100"
         >
-          <Download size={18} className="mr-2" /> Download Laporan (.xlsx)
+          <Download size={16} className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" /> Download Laporan (.xlsx)
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 border-2 border-slate-200 bg-white">
-          <div className="p-4 bg-slate-900 text-white font-black text-xl text-center tracking-wider">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-1 border-2 border-slate-200 bg-white rounded-xl overflow-hidden">
+          <div className="p-3 sm:p-4 bg-slate-900 text-white font-black text-lg sm:text-xl text-center tracking-wider">
             REPORT SISWA TERLAMBAT
           </div>
-          <div className="p-4 border-b border-slate-200 space-y-4">
+          <div className="p-3 sm:p-4 border-b border-slate-200 space-y-3 sm:space-y-4">
             <div>
-              <label htmlFor="month-filter" className="block text-sm font-bold text-slate-700 mb-2">Pilih Bulan</label>
+              <label htmlFor="month-filter" className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">Pilih Bulan</label>
               <select
                 id="month-filter"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded-md font-bold"
+                className="w-full p-1.5 sm:p-2 border border-slate-300 rounded-md font-bold text-xs sm:text-sm"
               >
                 {uniqueMonths.map(month => {
                   const date = new Date(`${month}-02`); // Use day 2 to avoid timezone issue
@@ -201,33 +201,33 @@ const ReportView: React.FC<Props> = ({ data }) => {
               </select>
             </div>
             <div>
-              <label htmlFor="class-filter" className="block text-sm font-bold text-slate-700 mb-2">Kelas</label>
+              <label htmlFor="class-filter" className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">Kelas</label>
               <select
                 id="class-filter"
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded-md font-bold"
+                className="w-full p-1.5 sm:p-2 border border-slate-300 rounded-md font-bold text-xs sm:text-sm"
               >
                 <option value={ALL_CLASSES_OPTION}>{ALL_CLASSES_OPTION}</option>
                 {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
-          <div className="p-4">
-            <div className="flex justify-between font-bold bg-slate-200 p-2 border-b-2 border-slate-300">
+          <div className="p-3 sm:p-4">
+            <div className="flex justify-between font-bold bg-slate-200 p-1.5 sm:p-2 border-b-2 border-slate-300 text-xs sm:text-sm">
               <span>NAMA SISWA</span>
               <span>Jumlah</span>
             </div>
-            <div className="max-h-[400px] overflow-y-auto">
+            <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto">
               {groupedLateStudents.length > 0 ? groupedLateStudents.map(([studentName, records]) => (
                 <div key={studentName} className="border-b border-slate-200 last:border-b-0">
-                  <div className="flex justify-between items-center p-2 bg-blue-50">
-                    <p className="font-bold text-blue-800 uppercase text-sm">{studentName}</p>
-                    <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full">{records.length}</span>
+                  <div className="flex justify-between items-center p-1.5 sm:p-2 bg-blue-50">
+                    <p className="font-bold text-blue-800 uppercase text-[10px] sm:text-sm">{studentName}</p>
+                    <span className="px-1.5 sm:px-2 py-0.5 bg-blue-600 text-white text-[10px] sm:text-xs font-bold rounded-full">{records.length}</span>
                   </div>
                   <div className="divide-y divide-slate-100">
                     {records.map(record => (
-                      <div key={record.id} className="pl-6 pr-2 py-2 text-xs text-slate-600 space-y-0.5">
+                      <div key={record.id} className="pl-4 sm:pl-6 pr-2 py-1.5 sm:py-2 text-[10px] sm:text-xs text-slate-600 space-y-0.5">
                         <p className="italic text-slate-800">"{record.reason || 'Tidak ada alasan'}"</p>
                         <p className="font-semibold text-rose-600">{record.status} ({record.className})</p>
                         <p>{new Date(record.date).toISOString().split('T')[0]}</p>
@@ -237,26 +237,26 @@ const ReportView: React.FC<Props> = ({ data }) => {
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-10 text-sm text-slate-400">
+                <div className="text-center py-6 sm:py-10 text-xs sm:text-sm text-slate-400">
                   Tidak ada data keterlambatan untuk filter ini.
                 </div>
               )}
             </div>
-            <div className="flex justify-between font-black bg-slate-200 p-2 border-t-2 border-slate-300 mt-2">
+            <div className="flex justify-between font-black bg-slate-200 p-1.5 sm:p-2 border-t-2 border-slate-300 mt-2 text-xs sm:text-sm">
               <span>Total Siswa Terlambat</span>
               <span>{groupedLateStudents.length}</span>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-[#2E5C3B] p-6 rounded-xl shadow-lg">
-          <h3 className="text-2xl font-bold text-white mb-6">
+        <div className="lg:col-span-2 bg-[#2E5C3B] p-4 sm:p-6 rounded-xl shadow-lg">
+          <h3 className="text-lg sm:text-2xl font-bold text-white mb-4 sm:mb-6">
             {selectedClass === ALL_CLASSES_OPTION
               ? `Total Keterlambatan Bulan ${selectedMonth ? new Date(`${selectedMonth}-02`).toLocaleString('id-ID', { month: 'long', year: 'numeric' }) : ''}`
               : `Grafik Keterlambatan Harian Kelas ${selectedClass}`
             }
           </h3>
-          <div className="h-96 w-full">
+          <div className="h-64 sm:h-96 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={selectedClass === ALL_CLASSES_OPTION ? chartData : dailyChartData}

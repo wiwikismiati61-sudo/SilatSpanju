@@ -376,30 +376,30 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6 animate-fadeIn">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Ringkasan Siswa Terlambat</h2>
-          <p className="text-slate-500">Pantau kehadiran siswa secara real-time</p>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">Ringkasan Siswa Terlambat</h2>
+          <p className="text-xs sm:text-sm text-slate-500">Pantau kehadiran siswa secara real-time</p>
         </div>
         <div className="flex items-center gap-2">
           <input 
             type="date" 
-            className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
             value={summaryStartDate}
             onChange={(e) => setSummaryStartDate(e.target.value)}
           />
-          <span className="text-slate-500">-</span>
+          <span className="text-slate-500 text-xs sm:text-sm">-</span>
           <input 
             type="date" 
-            className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
             value={summaryEndDate}
             onChange={(e) => setSummaryEndDate(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard 
           icon={<Users className="text-blue-600" />}
           label="Total Siswa"
@@ -428,37 +428,37 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
 
       {/* Parent Call Report */}
       <div className="bg-white border border-rose-100 rounded-2xl shadow-sm">
-        <div className="p-6 border-b border-rose-100 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                <div className="w-12 h-12 flex items-center justify-center bg-rose-50 text-rose-600 rounded-xl">
-                    <PhoneCall size={24}/>
+        <div className="p-4 sm:p-5 border-b border-rose-100 flex items-center justify-between">
+            <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-rose-50 text-rose-600 rounded-xl">
+                    <PhoneCall size={20} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900">Report Panggilan Orang Tua</h3>
-                    <p className="text-sm text-slate-500">Daftar siswa dengan keterlambatan lebih dari 2 kali.</p>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">Report Panggilan Orang Tua</h3>
+                    <p className="text-xs sm:text-sm text-slate-500">Daftar siswa dengan keterlambatan lebih dari 2 kali.</p>
                 </div>
             </div>
-            <span className="px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-full uppercase">Penting</span>
+            <span className="px-2 sm:px-3 py-1 bg-rose-600 text-white text-[10px] sm:text-xs font-bold rounded-full uppercase">Penting</span>
         </div>
         {parentCallList.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-xs sm:text-sm">
                 <thead className="bg-slate-50 text-slate-700 font-bold">
                     <tr>
-                        <th className="px-6 py-4">Nama Siswa</th>
-                        <th className="px-6 py-4">Kelas</th>
-                        <th className="px-6 py-4 text-center">Jumlah Terlambat</th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4">Nama Siswa</th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4">Kelas</th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">Jumlah Terlambat</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                     {parentCallList.map(student => (
                         <tr key={student.id} className="hover:bg-rose-50/50 transition-colors">
-                            <td className="px-6 py-4 font-bold text-slate-900">{student.name}</td>
-                            <td className="px-6 py-4">
-                                <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-xs">{student.className}</span>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-slate-900">{student.name}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4">
+                                <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[10px] sm:text-xs">{student.className}</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                                <span className="text-lg font-black text-rose-600">{student.lateCount} kali</span>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                                <span className="text-base sm:text-lg font-black text-rose-600">{student.lateCount} kali</span>
                             </td>
                         </tr>
                     ))}
@@ -466,11 +466,11 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
             </table>
           </div>
         ) : (
-            <div className="text-center py-16 px-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
-                    <CheckCircle2 size={32} />
+            <div className="text-center py-8 sm:py-12 px-4 sm:px-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 text-emerald-600 rounded-full mb-3 sm:mb-4">
+                    <CheckCircle2 size={24} className="sm:w-8 sm:h-8" />
                 </div>
-                <p className="text-slate-500 font-semibold">Tidak ada siswa yang perlu dipanggil saat ini.</p>
+                <p className="text-xs sm:text-sm text-slate-500 font-semibold">Tidak ada siswa yang perlu dipanggil saat ini.</p>
             </div>
         )}
       </div>
@@ -478,14 +478,14 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
       {/* Duplicate Data Report Section */}
       {isLoggedIn && (
         <div className="bg-white border border-orange-200 rounded-2xl shadow-sm">
-          <div className="p-6 border-b border-orange-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 flex items-center justify-center bg-orange-50 text-orange-600 rounded-xl">
-                <AlertTriangle size={24} />
+          <div className="p-4 sm:p-5 border-b border-orange-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-orange-50 text-orange-600 rounded-xl">
+                <AlertTriangle size={20} className="sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Report Data Double</h3>
-                <p className="text-sm text-slate-500">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Report Data Double</h3>
+                <p className="text-xs sm:text-sm text-slate-500">
                   {duplicateRecords.length > 0 
                     ? `Ditemukan ${duplicateRecords.length} siswa dengan data ganda pada hari yang sama.` 
                     : 'Tidak ada data ganda yang ditemukan.'}
@@ -495,7 +495,7 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
             <button 
               onClick={handleRemoveDuplicates}
               disabled={isRemovingDuplicates || duplicateRecords.length === 0}
-              className={`flex items-center justify-center px-4 py-2 text-white text-sm font-bold rounded-lg transition shadow-sm whitespace-nowrap ${
+              className={`flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow-sm whitespace-nowrap ${
                 isRemovingDuplicates || duplicateRecords.length === 0 
                   ? 'bg-orange-400 cursor-not-allowed' 
                   : 'bg-orange-600 hover:bg-orange-700'
@@ -503,12 +503,12 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
             >
               {isRemovingDuplicates ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Memproses...
                 </>
               ) : (
                 <>
-                  <Trash2 size={18} className="mr-2" /> Hapus Data Double
+                  <Trash2 size={16} className="mr-1 sm:mr-2" /> Hapus Data Double
                 </>
               )}
             </button>
@@ -516,14 +516,14 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
           
           {duplicateRecords.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-xs sm:text-sm">
                   <thead className="bg-slate-50 text-slate-700 font-bold">
                       <tr>
-                          <th className="px-6 py-4">Tanggal</th>
-                          <th className="px-6 py-4">Nama Siswa</th>
-                          <th className="px-6 py-4">Kelas</th>
-                          <th className="px-6 py-4 text-center">Jumlah Data</th>
-                          <th className="px-6 py-4">Waktu Tercatat</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4">Tanggal</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4">Nama Siswa</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4">Kelas</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">Jumlah Data</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4">Waktu Tercatat</th>
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -531,17 +531,17 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
                           const first = records[0];
                           return (
                           <tr key={idx} className="hover:bg-orange-50/50 transition-colors">
-                              <td className="px-6 py-4 font-medium text-slate-600">
-                                  {new Date(first.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                              <td className="px-4 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">
+                                  {new Date(first.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                               </td>
-                              <td className="px-6 py-4 font-bold text-slate-900">{first.studentName}</td>
-                              <td className="px-6 py-4">
-                                  <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-xs">{first.className}</span>
+                              <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-slate-900">{first.studentName}</td>
+                              <td className="px-4 sm:px-6 py-3 sm:py-4">
+                                  <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[10px] sm:text-xs">{first.className}</span>
                               </td>
-                              <td className="px-6 py-4 text-center">
-                                  <span className="text-sm font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded">{records.length}</span>
+                              <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                                  <span className="text-xs sm:text-sm font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded">{records.length}</span>
                               </td>
-                              <td className="px-6 py-4 text-slate-500">
+                              <td className="px-4 sm:px-6 py-3 sm:py-4 text-slate-500">
                                   {records.map(r => r.time || '00:00').join(', ')}
                               </td>
                           </tr>
@@ -550,11 +550,11 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
               </table>
             </div>
           ) : (
-            <div className="p-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full mb-4">
-                <CheckCircle2 size={32} />
+            <div className="p-6 sm:p-8 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 text-emerald-600 rounded-full mb-3 sm:mb-4">
+                <CheckCircle2 size={24} className="sm:w-8 sm:h-8" />
               </div>
-              <p className="text-slate-600 font-medium">Semua data sudah bersih. Tidak ada data ganda (0 data).</p>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium">Semua data sudah bersih. Tidak ada data ganda (0 data).</p>
             </div>
           )}
         </div>
@@ -562,20 +562,20 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
 
       {/* Weekly Report Section */}
       <div className="bg-white border border-indigo-100 rounded-2xl shadow-sm">
-        <div className="p-6 border-b border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-xl">
-              <CalendarCheck size={24} />
+        <div className="p-4 sm:p-5 border-b border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-xl">
+              <CalendarCheck size={20} className="sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Laporan Mingguan Terlambat</h3>
-              <p className="text-sm text-slate-500">Rekap siswa terlambat minggu ini (Kelas 7, 8, 9).</p>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">Laporan Mingguan Terlambat</h3>
+              <p className="text-xs sm:text-sm text-slate-500">Rekap siswa terlambat minggu ini (Kelas 7, 8, 9).</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <input 
               type="date" 
-              className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             />
@@ -583,48 +583,48 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
               <>
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
+                  className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
                 >
-                  <Upload size={18} className="mr-2" /> Import Excel
+                  <Upload size={16} className="mr-1 sm:mr-2" /> <span className="hidden sm:inline">Import Excel</span><span className="sm:hidden">Import</span>
                 </button>
                 <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleImportExcel} />
               </>
             )}
             <button 
               onClick={downloadWeeklyReport}
-              className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
+              className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
             >
-              <Download size={18} className="mr-2" /> Download Excel
+              <Download size={16} className="mr-1 sm:mr-2" /> <span className="hidden sm:inline">Download Excel</span><span className="sm:hidden">Download</span>
             </button>
           </div>
         </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {['7', '8', '9'].map(grade => {
             const students = weeklyData.report[grade];
             const totalLate = students.reduce((sum, s) => sum + s.count, 0);
             return (
-            <div key={grade} className="border border-slate-100 rounded-xl p-4 bg-slate-50 flex flex-col h-full">
-              <div className="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
-                <h4 className="font-bold text-slate-800">Kelas {grade}</h4>
-                <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">{totalLate} Terlambat</span>
+            <div key={grade} className="border border-slate-100 rounded-xl p-3 sm:p-4 bg-slate-50 flex flex-col h-full">
+              <div className="flex justify-between items-center mb-2 sm:mb-3 border-b border-slate-200 pb-2">
+                <h4 className="font-bold text-slate-800 text-sm sm:text-base">Kelas {grade}</h4>
+                <span className="text-[10px] sm:text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">{totalLate} Terlambat</span>
               </div>
               {students.length > 0 ? (
-                <ul className="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                <ul className="space-y-1.5 sm:space-y-2 max-h-48 sm:max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
                   {students.map((student, idx) => (
-                    <li key={idx} className="text-sm flex justify-between items-center">
+                    <li key={idx} className="text-xs sm:text-sm flex justify-between items-center">
                       <span className="font-medium text-slate-700 truncate pr-2" title={student.studentName}>{student.studentName}</span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xs font-mono text-slate-500">{student.latestTime}</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                        <span className="text-[10px] sm:text-xs font-mono text-slate-500">{student.latestTime}</span>
                         {student.count > 1 && (
-                          <span className="text-xs font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">{student.count}x</span>
+                          <span className="text-[10px] sm:text-xs font-bold text-rose-600 bg-rose-50 px-1 sm:px-1.5 py-0.5 rounded">{student.count}x</span>
                         )}
-                        <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded">{student.className}</span>
+                        <span className="text-[10px] sm:text-xs bg-slate-200 text-slate-600 px-1.5 sm:px-2 py-0.5 rounded">{student.className}</span>
                       </div>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-500 italic text-center py-4">Tidak ada yang terlambat</p>
+                <p className="text-xs sm:text-sm text-slate-500 italic text-center py-4">Tidak ada yang terlambat</p>
               )}
             </div>
           )})}
@@ -632,16 +632,16 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
       </div>
 
 
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h3 className="text-lg font-bold text-slate-900">Laporan Hadir Terlambat Siswa</h3>
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Terakhir update: {currentTime.toLocaleTimeString('id-ID')}</span>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900">Laporan Hadir Terlambat Siswa</h3>
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider">Terakhir update: {currentTime.toLocaleTimeString('id-ID')}</span>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <input 
               type="date" 
-              className="px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
               value={dailyReportDate}
               onChange={(e) => setDailyReportDate(e.target.value)}
             />
@@ -649,48 +649,48 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
               <>
                 <button 
                   onClick={() => dailyFileInputRef.current?.click()}
-                  className="flex items-center justify-center px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
+                  className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
                 >
-                  <Upload size={18} className="mr-2" /> Import
+                  <Upload size={16} className="mr-1 sm:mr-2" /> Import
                 </button>
                 <input type="file" ref={dailyFileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleImportExcel} />
               </>
             )}
             <button 
               onClick={downloadDailyReport}
-              className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
+              className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
             >
-              <Download size={18} className="mr-2" /> Download
+              <Download size={16} className="mr-1 sm:mr-2" /> Download
             </button>
           </div>
         </div>
         <div className="overflow-x-auto border border-slate-200 rounded-xl">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-xs sm:text-sm">
             <thead className="bg-slate-50 text-slate-700 font-bold">
               <tr>
-                <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4">Waktu</th>
-                <th className="px-6 py-4">Nama Siswa</th>
-                <th className="px-6 py-4">Kelas</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Alasan</th>
-                {isLoggedIn && <th className="px-6 py-4 text-right">Aksi</th>}
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Tanggal</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Waktu</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Nama Siswa</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Kelas</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Status</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4">Alasan</th>
+                {isLoggedIn && <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {todayAttendance.length > 0 ? (
                 todayAttendance.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-600">
-                      {new Date(record.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">
+                      {new Date(record.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-6 py-4 font-medium text-slate-600">{record.time}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{record.studentName}</td>
-                    <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-xs">{record.className}</span>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">{record.time}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-bold text-slate-900">{record.studentName}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[10px] sm:text-xs">{record.className}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold ${
                         record.status === 'Terlambat' 
                           ? 'bg-rose-100 text-rose-700' 
                           : 'bg-emerald-100 text-emerald-700'
@@ -698,24 +698,24 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
                         {record.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-500 italic max-w-xs truncate">{record.reason || '-'}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-slate-500 italic max-w-xs truncate">{record.reason || '-'}</td>
                     {isLoggedIn && (
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                        <div className="flex justify-end gap-1 sm:gap-2">
                           <button 
                             onClick={() => {
                               setEditingRecord(record);
                               setEditForm({ time: record.time, status: record.status, reason: record.reason });
                             }}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={14} className="sm:w-4 sm:h-4" />
                           </button>
                           <button 
                             onClick={() => handleDelete(record.id)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                            className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} className="sm:w-4 sm:h-4" />
                           </button>
                         </div>
                       </td>
@@ -724,7 +724,7 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
                 ))
               ) : (
                 <tr>
-                  <td colSpan={isLoggedIn ? 7 : 6} className="px-6 py-12 text-center text-slate-400">Belum ada data absensi untuk tanggal ini.</td>
+                  <td colSpan={isLoggedIn ? 7 : 6} className="px-3 sm:px-6 py-8 sm:py-12 text-center text-slate-400">Belum ada data absensi untuk tanggal ini.</td>
                 </tr>
               )}
             </tbody>

@@ -203,28 +203,28 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+    <div className="space-y-4 sm:space-y-6 animate-fadeIn">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 sm:pb-4 gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Operator</h2>
-          <p className="text-slate-500 text-sm">Setup Login, Upload Siswa, Database</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Operator</h2>
+          <p className="text-slate-500 text-xs sm:text-sm">Setup Login, Upload Siswa, Database</p>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-xl">
+        <div className="flex bg-slate-100 p-1 rounded-xl overflow-x-auto">
           <button 
             onClick={() => setCurrentSubTab('students')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition ${currentSubTab === 'students' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap ${currentSubTab === 'students' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
           >
             Data Siswa
           </button>
           <button 
             onClick={() => setCurrentSubTab('account')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition ${currentSubTab === 'account' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap ${currentSubTab === 'account' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
           >
             Setup Login
           </button>
           <button 
             onClick={() => setCurrentSubTab('database')}
-            className={`px-4 py-2 rounded-lg text-sm font-bold transition ${currentSubTab === 'database' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap ${currentSubTab === 'database' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
           >
             Database
           </button>
@@ -232,14 +232,14 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
       </div>
 
       {currentSubTab === 'students' && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-between">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
                 placeholder="Cari nama atau kelas..." 
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none"
+                className="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-xs sm:text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -247,48 +247,48 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
             <div className="flex gap-2 w-full sm:w-auto">
               <button 
                 onClick={() => { setEditingStudent(null); setNewStudent({ name: '', className: CLASSES[0] }); setShowAddModal(true); }}
-                className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition"
+                className="flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition text-xs sm:text-sm"
               >
-                <UserPlus size={18} className="mr-2" /> Tambah Siswa
+                <UserPlus size={16} className="mr-1 sm:mr-2" /> <span className="hidden sm:inline">Tambah Siswa</span><span className="sm:hidden">Tambah</span>
               </button>
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold transition"
+                className="flex-1 sm:flex-none flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-bold transition text-xs sm:text-sm"
               >
-                <Upload size={18} className="mr-2" /> Upload XLSX
+                <Upload size={16} className="mr-1 sm:mr-2" /> <span className="hidden sm:inline">Upload XLSX</span><span className="sm:hidden">Upload</span>
               </button>
               <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
             </div>
           </div>
 
           <div className="border border-slate-200 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50 text-slate-700 font-bold">
                 <tr>
-                  <th className="px-6 py-4">Nama Siswa</th>
-                  <th className="px-6 py-4">Kelas</th>
-                  <th className="px-6 py-4 text-right">Aksi</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4">Nama Siswa</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4">Kelas</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredStudents.length > 0 ? (
                   filteredStudents.map((s) => (
                     <tr key={s.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 font-bold text-slate-900">{s.name}</td>
-                      <td className="px-6 py-4 font-medium text-slate-600">{s.className}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 font-bold text-slate-900">{s.name}</td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">{s.className}</td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                        <div className="flex justify-end gap-1 sm:gap-2">
                           <button 
                             onClick={() => { setEditingStudent(s); setNewStudent({ name: s.name, className: s.className }); setShowAddModal(true); }}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={14} className="sm:w-4 sm:h-4" />
                           </button>
                           <button 
                             onClick={() => handleDeleteStudent(s.id)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                            className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={14} className="sm:w-4 sm:h-4" />
                           </button>
                         </div>
                       </td>
@@ -296,7 +296,7 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-slate-400">Belum ada data siswa.</td>
+                    <td colSpan={3} className="px-4 sm:px-6 py-8 sm:py-12 text-center text-slate-400">Belum ada data siswa.</td>
                   </tr>
                 )}
               </tbody>
@@ -342,29 +342,29 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
       )}
 
       {currentSubTab === 'database' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <Database className="text-indigo-600" size={24} /> Backup & Restore
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 py-2 sm:py-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+            <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
+              <Database className="text-indigo-600" size={20} className="sm:w-6 sm:h-6" /> Backup & Restore
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <button 
                 onClick={handleBackup}
-                className="w-full flex items-center justify-center px-4 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition"
+                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition text-xs sm:text-sm"
               >
-                <Download size={20} className="mr-3" /> Backup Full (.json)
+                <Download size={18} className="mr-2 sm:mr-3" /> Backup Full (.json)
               </button>
               <button 
                 onClick={() => restoreInputRef.current?.click()}
-                className="w-full flex items-center justify-center px-4 py-3 border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition"
+                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 border-2 border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition text-xs sm:text-sm"
               >
-                <Upload size={20} className="mr-3" /> Restore Full (.json)
+                <Upload size={18} className="mr-2 sm:mr-3" /> Restore Full (.json)
               </button>
               <button 
                 onClick={handleSaveToVercel}
-                className="w-full flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-md shadow-indigo-200"
+                className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-md shadow-indigo-200 text-xs sm:text-sm"
               >
-                <Database size={20} className="mr-3" /> Simpan ke Vercel (Online)
+                <Database size={18} className="mr-2 sm:mr-3" /> Simpan ke Vercel (Online)
               </button>
               <input type="file" ref={restoreInputRef} className="hidden" accept=".json" onChange={handleRestore} />
             </div>

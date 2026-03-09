@@ -72,37 +72,37 @@ const AbsensiView: React.FC<Props> = ({ data, onAddRecord }) => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-fadeIn">
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-extrabold text-slate-900">Input Kehadiran Mandiri</h2>
-        <p className="text-slate-500 text-lg">Silakan ikuti langkah-langkah di bawah ini.</p>
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 animate-fadeIn">
+      <div className="text-center space-y-1 sm:space-y-2">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">Input Kehadiran Mandiri</h2>
+        <p className="text-slate-500 text-sm sm:text-base">Silakan ikuti langkah-langkah di bawah ini.</p>
       </div>
 
       {/* Progress Stepper */}
-      <div className="flex items-center justify-center space-x-4 mb-12">
+      <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-6 sm:mb-8">
         {[1, 2, 3].map((num) => (
           <div key={num} className="flex items-center">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
-              step === num ? 'bg-indigo-600 text-white shadow-lg ring-4 ring-indigo-100' : 
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm sm:text-base transition-all duration-300 ${
+              step === num ? 'bg-indigo-600 text-white shadow-lg ring-2 sm:ring-4 ring-indigo-100' : 
               step > num ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'
             }`}>
-              {step > num ? <CheckCircle2 size={20} /> : num}
+              {step > num ? <CheckCircle2 size={16} className="sm:w-5 sm:h-5" /> : num}
             </div>
-            {num < 3 && <div className={`w-12 h-1 bg-slate-200 mx-2 rounded ${step > num ? 'bg-emerald-500' : ''}`} />}
+            {num < 3 && <div className={`w-6 sm:w-12 h-1 bg-slate-200 mx-1 sm:mx-2 rounded ${step > num ? 'bg-emerald-500' : ''}`} />}
           </div>
         ))}
       </div>
 
       {/* Step 1: Pilih Kelas */}
       {step === 1 && (
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold text-slate-800 text-center uppercase tracking-wide">Pilih Kelas Kamu</h3>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+        <div className="space-y-4 sm:space-y-6">
+          <h3 className="text-lg sm:text-xl font-bold text-slate-800 text-center uppercase tracking-wide">Pilih Kelas Kamu</h3>
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
             {CLASSES.map((cls) => (
               <button
                 key={cls}
                 onClick={() => { setSelectedClass(cls); setStep(2); }}
-                className="py-4 rounded-xl border-2 border-slate-100 font-bold text-slate-700 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all text-center text-lg shadow-sm"
+                className="py-2 sm:py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-700 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all text-center text-sm sm:text-base shadow-sm"
               >
                 {cls}
               </button>
@@ -113,30 +113,30 @@ const AbsensiView: React.FC<Props> = ({ data, onAddRecord }) => {
 
       {/* Step 2: Pilih Nama (Modified to single column vertical scroll) */}
       {step === 2 && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
-            <button onClick={() => setStep(1)} className="text-indigo-600 font-bold flex items-center hover:underline group">
-              <ChevronRight className="rotate-180 mr-1 group-hover:-translate-x-1 transition-transform" size={20} /> Kembali ke Kelas
+            <button onClick={() => setStep(1)} className="text-indigo-600 font-bold flex items-center hover:underline group text-xs sm:text-sm">
+              <ChevronRight className="rotate-180 mr-1 group-hover:-translate-x-1 transition-transform" size={16} /> Kembali ke Kelas
             </button>
-            <div className="px-5 py-2 bg-indigo-600 text-white rounded-xl font-black shadow-md shadow-indigo-100">Kelas {selectedClass}</div>
+            <div className="px-3 sm:px-5 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-xl font-black shadow-md shadow-indigo-100 text-xs sm:text-sm">Kelas {selectedClass}</div>
           </div>
-          <h3 className="text-2xl font-black text-slate-800 text-center mb-8">Siapa Nama Kamu?</h3>
+          <h3 className="text-lg sm:text-xl font-black text-slate-800 text-center mb-4 sm:mb-8">Siapa Nama Kamu?</h3>
           {filteredStudents.length > 0 ? (
-            <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-200 pr-4">
+            <div className="flex flex-col gap-2 sm:gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto p-1 sm:p-2 scrollbar-thin scrollbar-thumb-slate-200 pr-2 sm:pr-4">
               {filteredStudents.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => { setSelectedStudent(s); setStep(3); }}
-                  className="w-full p-5 text-left rounded-2xl border border-slate-200 bg-white hover:border-indigo-500 hover:bg-indigo-50 transition-all font-bold text-slate-700 flex justify-between items-center shadow-sm active:scale-[0.99]"
+                  className="w-full p-3 sm:p-4 text-left rounded-xl sm:rounded-2xl border border-slate-200 bg-white hover:border-indigo-500 hover:bg-indigo-50 transition-all font-bold text-slate-700 flex justify-between items-center shadow-sm active:scale-[0.99] text-sm sm:text-base"
                 >
                   <span className="truncate pr-4 uppercase tracking-wide">{s.name}</span>
-                  <ChevronRight size={20} className="text-slate-300 flex-shrink-0" />
+                  <ChevronRight size={18} className="text-slate-300 flex-shrink-0 sm:w-5 sm:h-5" />
                 </button>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-              <p className="text-slate-400 font-bold italic">Data siswa kelas ini belum diupload oleh Operator.</p>
+            <div className="text-center py-12 sm:py-20 bg-slate-50 rounded-2xl sm:rounded-3xl border-2 border-dashed border-slate-200">
+              <p className="text-slate-400 font-bold italic text-sm sm:text-base">Data siswa kelas ini belum diupload oleh Operator.</p>
             </div>
           )}
         </div>
@@ -144,35 +144,35 @@ const AbsensiView: React.FC<Props> = ({ data, onAddRecord }) => {
 
       {/* Step 3: Alasan & Konfirmasi */}
       {step === 3 && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
-            <button onClick={() => setStep(2)} className="text-indigo-600 font-bold flex items-center hover:underline group">
-              <ChevronRight className="rotate-180 mr-1 group-hover:-translate-x-1 transition-transform" size={20} /> Ganti Nama
+            <button onClick={() => setStep(2)} className="text-indigo-600 font-bold flex items-center hover:underline group text-xs sm:text-sm">
+              <ChevronRight className="rotate-180 mr-1 group-hover:-translate-x-1 transition-transform" size={16} /> Ganti Nama
             </button>
             <div className="text-right">
-              <div className="font-black text-slate-900 uppercase tracking-tight">{selectedStudent?.name}</div>
-              <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Kelas {selectedClass}</div>
+              <div className="font-black text-slate-900 uppercase tracking-tight text-sm sm:text-base">{selectedStudent?.name}</div>
+              <div className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">Kelas {selectedClass}</div>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-8 text-amber-900 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600">
-                <Clock size={24} />
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-amber-900 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-600">
+                <Clock size={20} className="sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h4 className="text-xl font-black uppercase tracking-tight">Kenapa Terlambat?</h4>
-                <p className="text-xs font-bold text-amber-600/70 uppercase tracking-widest">Pilih salah satu alasan di bawah</p>
+                <h4 className="text-base sm:text-xl font-black uppercase tracking-tight">Kenapa Terlambat?</h4>
+                <p className="text-[10px] sm:text-xs font-bold text-amber-600/70 uppercase tracking-widest">Pilih salah satu alasan di bawah</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
               {REASONS.map((r) => (
                 <button
                   key={r}
                   onClick={() => setSelectedReason(r)}
-                  className={`p-4 rounded-2xl border-2 text-left font-bold transition-all ${
+                  className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 text-left font-bold transition-all text-sm sm:text-base ${
                     selectedReason === r 
-                      ? 'bg-white border-amber-500 text-amber-900 shadow-md ring-4 ring-amber-100' 
+                      ? 'bg-white border-amber-500 text-amber-900 shadow-md ring-2 sm:ring-4 ring-amber-100' 
                       : 'bg-white/50 border-white hover:border-amber-200'
                   }`}
                 >
@@ -184,7 +184,7 @@ const AbsensiView: React.FC<Props> = ({ data, onAddRecord }) => {
             {selectedReason === 'Lainnya' && (
               <textarea
                 placeholder="Tuliskan alasan lainnya secara singkat di sini..."
-                className="w-full p-5 rounded-2xl border-2 border-amber-100 focus:border-amber-400 focus:bg-white outline-none min-h-[120px] font-bold transition-all"
+                className="w-full p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 border-amber-100 focus:border-amber-400 focus:bg-white outline-none min-h-[80px] sm:min-h-[120px] font-bold transition-all text-sm sm:text-base"
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
               />
@@ -194,7 +194,7 @@ const AbsensiView: React.FC<Props> = ({ data, onAddRecord }) => {
           <button
             onClick={handleSubmit}
             disabled={!selectedReason || (selectedReason === 'Lainnya' && !customReason)}
-            className="w-full py-5 bg-indigo-600 text-white text-xl font-black uppercase tracking-[0.1em] rounded-3xl shadow-2xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+            className="w-full py-3 sm:py-5 bg-indigo-600 text-white text-base sm:text-xl font-black uppercase tracking-[0.1em] rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
           >
             Kirim Absensi Saya
           </button>
