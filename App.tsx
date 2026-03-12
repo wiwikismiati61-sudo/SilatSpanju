@@ -145,7 +145,21 @@ const App: React.FC = () => {
       case Tab.Dashboard:
         return <DashboardView data={data} currentTime={currentTime} isLoggedIn={isOperator} updateData={updateAppData} />;
       case Tab.Absensi:
-        return <AbsensiView data={data} onAddRecord={(record) => updateAppData({ attendance: [record, ...data.attendance] })} />;
+        return isAuthenticated ? (
+          <AbsensiView data={data} onAddRecord={(record) => updateAppData({ attendance: [record, ...data.attendance] })} />
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+            <ShieldCheck size={64} className="text-slate-300 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800">Akses Terbatas</h2>
+            <p className="text-slate-500 mb-6">Silakan login terlebih dahulu untuk melakukan absensi.</p>
+            <button 
+              onClick={() => setShowLoginModal(true)}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              Login Sekarang
+            </button>
+          </div>
+        );
       case Tab.Operator:
         return isOperator ? (
           <OperatorView data={data} updateData={updateAppData} setActiveTab={setActiveTab} />
@@ -226,7 +240,7 @@ const App: React.FC = () => {
                     <span className="hidden md:block">Logout</span>
                   </button>
                 </div>
-              ) : (
+              ) : activeTab !== Tab.Dashboard ? (
                 <button 
                   onClick={() => setShowLoginModal(true)}
                   className="flex items-center px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition"
@@ -234,7 +248,7 @@ const App: React.FC = () => {
                   <LogIn size={16} className="md:mr-2" />
                   <span className="hidden md:block">Login</span>
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
