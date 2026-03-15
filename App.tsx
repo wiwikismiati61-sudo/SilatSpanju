@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFirebaseLoaded, setIsFirebaseLoaded] = useState(false);
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
+  const [firebaseErrorDetail, setFirebaseErrorDetail] = useState<string | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<any>(null);
 
   const isOperator = userRole === 'Operator';
@@ -54,6 +55,7 @@ const App: React.FC = () => {
         signInAnonymously(auth).catch(e => {
           // Log the error to help debug API key restriction issues on Vercel
           console.error("Anonymous auth failed (likely API key restriction on Vercel):", e);
+          setFirebaseErrorDetail(e.message || String(e));
           setFirebaseError('auth-required');
         });
       }
@@ -247,9 +249,15 @@ const App: React.FC = () => {
             <ShieldCheck size={40} />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-4">Autentikasi Database Diperlukan</h1>
-          <p className="text-lg text-slate-600 mb-8">
+          <p className="text-lg text-slate-600 mb-4">
             Aplikasi ini membutuhkan akses ke database Firebase. Karena fitur <strong>Anonymous Authentication</strong> belum diaktifkan, Anda dapat menggunakan Akun Google Anda untuk melanjutkan.
           </p>
+          
+          {/* Debug info for Vercel */}
+          <div className="mb-8 p-4 bg-red-50 text-red-700 text-sm rounded-lg text-left font-mono overflow-auto border border-red-100">
+            <strong>Detail Error:</strong><br/>
+            {firebaseErrorDetail || "Tidak ada detail error tambahan."}
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
