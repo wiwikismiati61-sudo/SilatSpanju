@@ -15,8 +15,9 @@ import AbsensiView from './components/AbsensiView';
 import OperatorView from './components/OperatorView';
 import ReportView from './components/ReportView';
 import { AppData, Tab } from './types';
-import { db } from './firebase';
+import { db, auth, googleProvider } from './firebase';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { signInWithPopup, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 const INITIAL_DATA: AppData = {
   students: [],
@@ -36,12 +37,34 @@ const App: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFirebaseLoaded, setIsFirebaseLoaded] = useState(false);
+  const [firebaseError, setFirebaseError] = useState<string | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
 
   const isOperator = userRole === 'Operator';
   const isAuthenticated = userRole !== null;
 
+  // Handle Firebase Auth
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setFirebaseUser(user);
+        setFirebaseError(null);
+      } else {
+        // Try anonymous auth first
+        signInAnonymously(auth).catch(e => {
+          // Silently handle the error and show the auth UI instead of logging it
+          // as it's an expected state when anonymous auth is not enabled yet.
+          setFirebaseError('auth-required');
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Load data from Firebase
   useEffect(() => {
+    if (!firebaseUser) return; // Wait until authenticated
+
     const docRef = doc(db, 'appData', 'main');
 
     // First check if we need to migrate local data to Firebase
@@ -63,8 +86,11 @@ const App: React.FC = () => {
             await setDoc(docRef, INITIAL_DATA);
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error("Migration check failed:", e);
+        if (e?.message?.includes("Missing or insufficient permissions") || e?.code === 'permission-denied') {
+          setFirebaseError('permission-denied');
+        }
       }
     };
 
@@ -78,8 +104,11 @@ const App: React.FC = () => {
           localStorage.setItem('absensi_db', JSON.stringify(firebaseData));
         }
         setIsFirebaseLoaded(true);
-      }, (error) => {
+      }, (error: any) => {
         console.error("Firebase listen error:", error);
+        if (error?.message?.includes("Missing or insufficient permissions") || error?.code === 'permission-denied') {
+          setFirebaseError('permission-denied');
+        }
         // Fallback to local storage if Firebase fails
         const savedData = localStorage.getItem('absensi_db');
         if (savedData) {
@@ -97,7 +126,7 @@ const App: React.FC = () => {
     
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [firebaseUser]);
 
   // Save data to Firebase whenever it changes
   const saveToFirebase = async (newData: AppData) => {
@@ -209,6 +238,79 @@ const App: React.FC = () => {
         return null;
     }
   };
+
+  if (firebaseError === 'auth-required') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-8 text-center border border-indigo-100">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-indigo-50 text-indigo-500 rounded-full mb-6">
+            <ShieldCheck size={40} />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-4">Autentikasi Database Diperlukan</h1>
+          <p className="text-lg text-slate-600 mb-8">
+            Aplikasi ini membutuhkan akses ke database Firebase. Karena fitur <strong>Anonymous Authentication</strong> belum diaktifkan, Anda dapat menggunakan Akun Google Anda untuk melanjutkan.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button 
+              onClick={() => signInWithPopup(auth, googleProvider).catch(e => console.error(e))}
+              className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+            >
+              Login dengan Google
+            </button>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-white text-slate-700 border border-slate-200 font-bold rounded-xl hover:bg-slate-50 transition"
+            >
+              Coba Ulang (Refresh)
+            </button>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-100 text-sm text-slate-500 text-left">
+            <p className="font-semibold mb-2">Opsi Alternatif (Untuk Admin):</p>
+            <p>Jika Anda tidak ingin menggunakan Login Google, Anda bisa mengaktifkan "Anonymous Authentication" di Firebase Console &gt; Authentication &gt; Sign-in method.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (firebaseError === 'permission-denied') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-8 text-center border border-red-100">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-red-50 text-red-500 rounded-full mb-6">
+            <ShieldCheck size={40} />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-4">Akses Database Diblokir</h1>
+          <p className="text-lg text-slate-600 mb-8">
+            Firebase secara otomatis memblokir akses karena fitur <strong>Anonymous Authentication</strong> belum diaktifkan.
+            Data Anda aman, namun aplikasi tidak dapat membaca atau menyimpannya.
+          </p>
+          
+          <div className="bg-slate-50 rounded-xl p-6 text-left mb-8 border border-slate-200">
+            <h3 className="font-bold text-slate-800 mb-4 text-lg">Cara Memperbaiki (Hanya 1 Menit):</h3>
+            <ol className="list-decimal list-inside space-y-3 text-slate-700">
+              <li>Buka <a href="https://console.firebase.google.com/project/gen-lang-client-0253660305/authentication/providers" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">Firebase Console</a> di tab baru.</li>
+              <li>Klik tombol <strong>Get Started</strong> (jika diminta).</li>
+              <li>Pilih tab <strong>Sign-in method</strong>.</li>
+              <li>Klik <strong>Add new provider</strong>, lalu pilih <strong>Anonymous</strong>.</li>
+              <li>Geser tombol ke <strong>Enable</strong> (Aktif).</li>
+              <li>Klik <strong>Save</strong> (Simpan).</li>
+              <li>Kembali ke halaman ini dan <strong>Refresh (F5)</strong>.</li>
+            </ol>
+          </div>
+          
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+          >
+            Saya Sudah Mengaktifkannya (Refresh)
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
