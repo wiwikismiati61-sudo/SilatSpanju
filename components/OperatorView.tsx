@@ -181,24 +181,14 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
     e.target.value = '';
   };
 
-  const handleSaveToVercel = async () => {
+  const handleSaveToFirebase = async () => {
     try {
-      const response = await fetch('/api/data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (response.ok) {
-        alert("Data berhasil disimpan ke Vercel secara permanen!");
-      } else {
-        alert("Gagal menyimpan data ke Vercel. Pastikan Vercel KV sudah aktif.");
-      }
+      // updateData in App.tsx now handles saving to Firebase automatically
+      updateData(data);
+      alert("Data berhasil disinkronkan ke Firebase secara permanen!");
     } catch (error) {
-      console.error("Error saving to Vercel:", error);
-      alert("Terjadi kesalahan saat menyimpan data ke Vercel.");
+      console.error("Error saving to Firebase:", error);
+      alert("Terjadi kesalahan saat menyimpan data ke Firebase.");
     }
   };
 
@@ -361,10 +351,10 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
                 <Upload size={18} className="mr-2 sm:mr-3" /> Restore Full (.json)
               </button>
               <button 
-                onClick={handleSaveToVercel}
+                onClick={handleSaveToFirebase}
                 className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-md shadow-indigo-200 text-xs sm:text-sm"
               >
-                <Database size={18} className="mr-2 sm:mr-3" /> Simpan ke Vercel (Online)
+                <Database size={18} className="mr-2 sm:mr-3" /> Simpan ke Firebase (Online)
               </button>
               <input type="file" ref={restoreInputRef} className="hidden" accept=".json" onChange={handleRestore} />
             </div>
@@ -376,10 +366,10 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
             </h3>
             <div className="space-y-2 text-sm">
               <p className="text-indigo-900 font-mono break-all p-3 bg-white rounded-lg border border-indigo-100">
-                LocalStorage Browser: {window.location.hostname}
+                Cloud Firestore (Firebase)
               </p>
               <p className="text-slate-500">
-                Data disimpan secara lokal di browser ini. Gunakan fitur Backup/Restore untuk memindahkan data ke komputer lain atau untuk cadangan.
+                Data disimpan secara real-time dan permanen di server Firebase. Data tidak akan hilang saat aplikasi ditutup atau saat login/logout.
               </p>
               <div className="pt-4 flex justify-between font-bold text-indigo-700">
                 <span>Total Data Absensi:</span>

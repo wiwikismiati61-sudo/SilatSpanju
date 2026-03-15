@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Check if the user is authenticated (anonymously or otherwise)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    match /appData/main {
+      // Allow read and write to anyone who is authenticated anonymously
+      // This matches the app's client-side login security model
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

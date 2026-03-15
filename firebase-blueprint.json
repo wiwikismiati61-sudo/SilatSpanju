@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "AppData": {
+      "title": "AppData",
+      "description": "The main application data containing students, attendance, and user credentials.",
+      "type": "object",
+      "properties": {
+        "students": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "className": { "type": "string" }
+            }
+          }
+        },
+        "attendance": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "studentId": { "type": "string" },
+              "studentName": { "type": "string" },
+              "className": { "type": "string" },
+              "date": { "type": "string" },
+              "time": { "type": "string" },
+              "status": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "user": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/appData/main": {
+      "schema": { "$ref": "#/entities/AppData" },
+      "description": "The single document storing all application data."
+    }
+  }
+}

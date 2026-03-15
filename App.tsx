@@ -15,6 +15,8 @@ import AbsensiView from './components/AbsensiView';
 import OperatorView from './components/OperatorView';
 import ReportView from './components/ReportView';
 import { AppData, Tab } from './types';
+import { db } from './firebase';
+import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 
 const INITIAL_DATA: AppData = {
   students: [],
@@ -33,78 +35,80 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFirebaseLoaded, setIsFirebaseLoaded] = useState(false);
 
   const isOperator = userRole === 'Operator';
   const isAuthenticated = userRole !== null;
 
-  // Load data from API
+  // Load data from Firebase
   useEffect(() => {
-    const loadData = async () => {
+    const docRef = doc(db, 'appData', 'main');
+
+    // First check if we need to migrate local data to Firebase
+    const migrateLocalData = async () => {
       try {
-        const response = await fetch('/api/data');
-        if (response.ok) {
-          const parsed = await response.json();
-          if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-            setData(parsed);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+          // Firebase is empty, check local storage
+          const savedData = localStorage.getItem('absensi_db');
+          if (savedData) {
+            const parsed = JSON.parse(savedData);
+            if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+              console.log("Migrating local data to Firebase...");
+              await setDoc(docRef, parsed);
+            } else {
+              await setDoc(docRef, INITIAL_DATA);
+            }
+          } else {
+            await setDoc(docRef, INITIAL_DATA);
           }
         }
       } catch (e) {
-        console.error("Failed to load data from API", e);
-        // Fallback to local storage if API fails (e.g. offline)
+        console.error("Migration check failed:", e);
+      }
+    };
+
+    migrateLocalData().then(() => {
+      // Set up real-time listener
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const firebaseData = docSnap.data() as AppData;
+          setData(firebaseData);
+          // Keep local storage updated as a fallback
+          localStorage.setItem('absensi_db', JSON.stringify(firebaseData));
+        }
+        setIsFirebaseLoaded(true);
+      }, (error) => {
+        console.error("Firebase listen error:", error);
+        // Fallback to local storage if Firebase fails
         const savedData = localStorage.getItem('absensi_db');
         if (savedData) {
           try {
-            const parsed = JSON.parse(savedData);
-            if (parsed && typeof parsed === 'object') {
-              setData(parsed);
-            }
+            setData(JSON.parse(savedData));
           } catch (err) {
             console.error("Failed to parse local data", err);
           }
         }
-      }
-    };
-    
-    loadData();
+        setIsFirebaseLoaded(true);
+      });
+
+      return () => unsubscribe();
+    });
     
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Save data to API whenever it changes
-  useEffect(() => {
-    const saveData = async () => {
-      // Don't save if data is empty and hasn't been loaded yet
-      if (data === INITIAL_DATA) return;
-      
-      // Prevent saving empty data if it was already populated
-      if (data.students.length === 0 && data.attendance.length === 0 && data.user.username === 'admin') {
-         // It might be a reset, but let's be careful not to overwrite the DB with empty data
-         // unless explicitly requested. For now, we'll allow it but log it.
-         console.log("Saving potentially empty data to API");
-      }
-      
-      try {
-        await fetch('/api/data', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-      } catch (e) {
-        console.error("Failed to save data to API", e);
-      }
-      
-      // Also save to localStorage as backup
-      localStorage.setItem('absensi_db', JSON.stringify(data));
-    };
-    
-    // Only save if we have actual data (not just the initial state)
-    if (data !== INITIAL_DATA) {
-      saveData();
+  // Save data to Firebase whenever it changes
+  const saveToFirebase = async (newData: AppData) => {
+    try {
+      await setDoc(doc(db, 'appData', 'main'), newData);
+    } catch (e) {
+      console.error("Failed to save data to Firebase", e);
+      // Fallback to local storage
+      localStorage.setItem('absensi_db', JSON.stringify(newData));
     }
-  }, [data]);
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,12 +135,21 @@ const App: React.FC = () => {
   // Improved update function to handle partial or full replacements
   const updateAppData = (newData: Partial<AppData> | AppData) => {
     setData(prev => {
+      let updatedData: AppData;
       // If it's a full restore (has all primary keys)
       if ('students' in newData && 'attendance' in newData && 'user' in newData) {
-        return newData as AppData;
+        updatedData = newData as AppData;
+      } else {
+        // Otherwise, partial update
+        updatedData = { ...prev, ...newData };
       }
-      // Otherwise, partial update
-      return { ...prev, ...newData };
+      
+      // Save to Firebase asynchronously
+      if (isFirebaseLoaded) {
+        saveToFirebase(updatedData);
+      }
+      
+      return updatedData;
     });
   };
 
