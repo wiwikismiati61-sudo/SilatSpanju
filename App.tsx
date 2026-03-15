@@ -52,8 +52,8 @@ const App: React.FC = () => {
       } else {
         // Try anonymous auth first
         signInAnonymously(auth).catch(e => {
-          // Silently handle the error and show the auth UI instead of logging it
-          // as it's an expected state when anonymous auth is not enabled yet.
+          // Log the error to help debug API key restriction issues on Vercel
+          console.error("Anonymous auth failed (likely API key restriction on Vercel):", e);
           setFirebaseError('auth-required');
         });
       }
