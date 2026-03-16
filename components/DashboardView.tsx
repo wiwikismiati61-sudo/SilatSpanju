@@ -426,6 +426,106 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
         />
       </div>
 
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900">Laporan Hadir Terlambat Siswa</h3>
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider">Terakhir update: {currentTime.toLocaleTimeString('id-ID')}</span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <input 
+              type="date" 
+              className="px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
+              value={dailyReportDate}
+              onChange={(e) => setDailyReportDate(e.target.value)}
+            />
+            {isLoggedIn && (
+              <>
+                <button 
+                  onClick={() => dailyFileInputRef.current?.click()}
+                  className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
+                >
+                  <Upload size={16} className="mr-1 sm:mr-2" /> Import
+                </button>
+                <input type="file" ref={dailyFileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleImportExcel} />
+              </>
+            )}
+            <button 
+              onClick={downloadDailyReport}
+              className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
+            >
+              <Download size={16} className="mr-1 sm:mr-2" /> Download
+            </button>
+          </div>
+        </div>
+        <div className="overflow-auto border border-slate-200 rounded-xl max-h-[350px] scrollbar-thin scrollbar-thumb-slate-200">
+          <table className="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead className="bg-slate-50 text-slate-700 font-bold sticky top-0 z-10 shadow-sm">
+              <tr>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50">Tanggal</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50">Waktu</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50">Nama Siswa</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50">Kelas</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50">Status</th>
+                <th className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50">Alasan</th>
+                {isLoggedIn && <th className="px-3 sm:px-6 py-3 sm:py-4 text-right bg-slate-50">Aksi</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {todayAttendance.length > 0 ? (
+                todayAttendance.map((record) => (
+                  <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">
+                      {new Date(record.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">{record.time}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-bold text-slate-900">{record.studentName}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[10px] sm:text-xs">{record.className}</span>
+                    </td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold ${
+                        record.status === 'Terlambat' 
+                          ? 'bg-rose-100 text-rose-700' 
+                          : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {record.status}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-slate-500 italic max-w-xs truncate">{record.reason || '-'}</td>
+                    {isLoggedIn && (
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                        <div className="flex justify-end gap-1 sm:gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingRecord(record);
+                              setEditForm({ time: record.time, status: record.status, reason: record.reason });
+                            }}
+                            className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                          >
+                            <Edit2 size={14} className="sm:w-4 sm:h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(record.id)}
+                            className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 size={14} className="sm:w-4 sm:h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={isLoggedIn ? 7 : 6} className="px-3 sm:px-6 py-8 sm:py-12 text-center text-slate-400">Belum ada data absensi untuk tanggal ini.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Parent Call Report */}
       <div className="bg-white border border-rose-100 rounded-2xl shadow-sm">
         <div className="p-4 sm:p-5 border-b border-rose-100 flex items-center justify-between">
@@ -441,13 +541,13 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
             <span className="px-2 sm:px-3 py-1 bg-rose-600 text-white text-[10px] sm:text-xs font-bold rounded-full uppercase">Penting</span>
         </div>
         {parentCallList.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-slate-50 text-slate-700 font-bold">
+          <div className="overflow-auto max-h-[350px] scrollbar-thin scrollbar-thumb-slate-200">
+            <table className="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead className="bg-slate-50 text-slate-700 font-bold sticky top-0 z-10 shadow-sm">
                     <tr>
-                        <th className="px-4 sm:px-6 py-3 sm:py-4">Nama Siswa</th>
-                        <th className="px-4 sm:px-6 py-3 sm:py-4">Kelas</th>
-                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">Jumlah Terlambat</th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50">Nama Siswa</th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50">Kelas</th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-center bg-slate-50">Jumlah Terlambat</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -631,106 +731,6 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
         </div>
       </div>
 
-
-      <div className="space-y-3 sm:space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900">Laporan Hadir Terlambat Siswa</h3>
-            <span className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider">Terakhir update: {currentTime.toLocaleTimeString('id-ID')}</span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <input 
-              type="date" 
-              className="px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-xs sm:text-sm"
-              value={dailyReportDate}
-              onChange={(e) => setDailyReportDate(e.target.value)}
-            />
-            {isLoggedIn && (
-              <>
-                <button 
-                  onClick={() => dailyFileInputRef.current?.click()}
-                  className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
-                >
-                  <Upload size={16} className="mr-1 sm:mr-2" /> Import
-                </button>
-                <input type="file" ref={dailyFileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleImportExcel} />
-              </>
-            )}
-            <button 
-              onClick={downloadDailyReport}
-              className="flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 bg-indigo-600 text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
-            >
-              <Download size={16} className="mr-1 sm:mr-2" /> Download
-            </button>
-          </div>
-        </div>
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
-          <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-slate-50 text-slate-700 font-bold">
-              <tr>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Tanggal</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Waktu</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Nama Siswa</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Kelas</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Status</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4">Alasan</th>
-                {isLoggedIn && <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Aksi</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {todayAttendance.length > 0 ? (
-                todayAttendance.map((record) => (
-                  <tr key={record.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">
-                      {new Date(record.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-slate-600">{record.time}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 font-bold text-slate-900">{record.studentName}</td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[10px] sm:text-xs">{record.className}</span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold ${
-                        record.status === 'Terlambat' 
-                          ? 'bg-rose-100 text-rose-700' 
-                          : 'bg-emerald-100 text-emerald-700'
-                      }`}>
-                        {record.status}
-                      </span>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-slate-500 italic max-w-xs truncate">{record.reason || '-'}</td>
-                    {isLoggedIn && (
-                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
-                        <div className="flex justify-end gap-1 sm:gap-2">
-                          <button 
-                            onClick={() => {
-                              setEditingRecord(record);
-                              setEditForm({ time: record.time, status: record.status, reason: record.reason });
-                            }}
-                            className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
-                          >
-                            <Edit2 size={14} className="sm:w-4 sm:h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(record.id)}
-                            className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
-                          >
-                            <Trash2 size={14} className="sm:w-4 sm:h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={isLoggedIn ? 7 : 6} className="px-3 sm:px-6 py-8 sm:py-12 text-center text-slate-400">Belum ada data absensi untuk tanggal ini.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {showConfirmDuplicate && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">

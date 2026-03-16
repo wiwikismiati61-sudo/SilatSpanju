@@ -1,15 +1,42 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Check if the user is authenticated (anonymously or otherwise)
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: appData
+    // Document ID: main
+    // Fields:
+    //   - students: list (required) - List of students
+    //   - attendance: list (required) - List of attendance records
+    //   - settings: map (required) - App settings
+    //   - user: map (required) - Operator credentials
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    function isValidAppData(data) {
+      return data.keys().hasAll(['students', 'attendance', 'settings', 'user']) &&
+             data.students is list &&
+             data.attendance is list &&
+             data.settings is map &&
+             data.user is map;
+    }
+
     match /appData/main {
-      // Allow read and write to anyone who is authenticated anonymously
-      // This matches the app's client-side login security model
-      allow read, write: if isAuthenticated();
+      // Allow read and write to anyone who is authenticated
+      // This matches the app's current model where any authenticated user (including anonymous)
+      // can manage the app data.
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isValidAppData(request.resource.data);
     }
   }
 }

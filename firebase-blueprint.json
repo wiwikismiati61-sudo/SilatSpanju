@@ -2,50 +2,33 @@
   "entities": {
     "AppData": {
       "title": "AppData",
-      "description": "The main application data containing students, attendance, and user credentials.",
+      "description": "The main data structure for the application, including students, attendance, and settings.",
       "type": "object",
       "properties": {
         "students": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "name": { "type": "string" },
-              "className": { "type": "string" }
-            }
-          }
+          "description": "List of students."
         },
         "attendance": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "studentId": { "type": "string" },
-              "studentName": { "type": "string" },
-              "className": { "type": "string" },
-              "date": { "type": "string" },
-              "time": { "type": "string" },
-              "status": { "type": "string" },
-              "reason": { "type": "string" }
-            }
-          }
+          "description": "List of attendance records."
+        },
+        "settings": {
+          "type": "object",
+          "description": "Application settings."
         },
         "user": {
           "type": "object",
-          "properties": {
-            "username": { "type": "string" },
-            "password": { "type": "string" }
-          }
+          "description": "User credentials for the operator."
         }
-      }
+      },
+      "required": ["students", "attendance", "settings", "user"]
     }
   },
   "firestore": {
     "/appData/main": {
-      "schema": { "$ref": "#/entities/AppData" },
-      "description": "The single document storing all application data."
+      "schema": "AppData",
+      "description": "The single document containing all application data."
     }
   }
 }

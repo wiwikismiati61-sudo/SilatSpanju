@@ -16,8 +16,78 @@ import OperatorView from './components/OperatorView';
 import ReportView from './components/ReportView';
 import { AppData, Tab } from './types';
 import { db, auth, googleProvider } from './firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, getDocFromServer } from 'firebase/firestore';
 import { signInWithPopup, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      let errorMessage = "Terjadi kesalahan pada aplikasi.";
+      try {
+        const parsed = JSON.parse(this.state.error.message);
+        if (parsed.error) errorMessage = `Firebase Error: ${parsed.error}`;
+      } catch (e) {
+        errorMessage = this.state.error.message || String(this.state.error);
+      }
+
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center border border-red-100">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-red-50 text-red-500 rounded-full mb-6">
+              <ShieldCheck size={32} />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-4">Waduh! Terjadi Kesalahan</h1>
+            <p className="text-slate-600 mb-6">{errorMessage}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+            >
+              Muat Ulang Aplikasi
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const INITIAL_DATA: AppData = {
   students: [],
@@ -44,8 +114,44 @@ const App: React.FC = () => {
   const isOperator = userRole === 'Operator';
   const isAuthenticated = userRole !== null;
 
+  const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
+    const errInfo: FirestoreErrorInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      authInfo: {
+        userId: auth.currentUser?.uid,
+        email: auth.currentUser?.email,
+        emailVerified: auth.currentUser?.emailVerified,
+        isAnonymous: auth.currentUser?.isAnonymous,
+        tenantId: auth.currentUser?.tenantId,
+        providerInfo: auth.currentUser?.providerData.map(provider => ({
+          providerId: provider.providerId,
+          displayName: provider.displayName,
+          email: provider.email,
+          photoUrl: provider.photoURL
+        })) || []
+      },
+      operationType,
+      path
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+    throw new Error(JSON.stringify(errInfo));
+  };
+
+  const testConnection = async () => {
+    try {
+      await getDocFromServer(doc(db, 'test', 'connection'));
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('the client is offline')) {
+        console.error("Please check your Firebase configuration.");
+        setFirebaseErrorDetail("Firestore backend tidak terjangkau. Periksa koneksi internet atau konfigurasi Firebase Anda.");
+        setFirebaseError('auth-required');
+      }
+    }
+  };
+
   // Handle Firebase Auth
   useEffect(() => {
+    testConnection();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setFirebaseUser(user);
@@ -92,6 +198,8 @@ const App: React.FC = () => {
         console.error("Migration check failed:", e);
         if (e?.message?.includes("Missing or insufficient permissions") || e?.code === 'permission-denied') {
           setFirebaseError('permission-denied');
+        } else {
+          handleFirestoreError(e, OperationType.GET, 'appData/main');
         }
       }
     };
@@ -110,6 +218,8 @@ const App: React.FC = () => {
         console.error("Firebase listen error:", error);
         if (error?.message?.includes("Missing or insufficient permissions") || error?.code === 'permission-denied') {
           setFirebaseError('permission-denied');
+        } else {
+          handleFirestoreError(error, OperationType.GET, 'appData/main');
         }
         // Fallback to local storage if Firebase fails
         const savedData = localStorage.getItem('absensi_db');
@@ -138,6 +248,7 @@ const App: React.FC = () => {
       console.error("Failed to save data to Firebase", e);
       // Fallback to local storage
       localStorage.setItem('absensi_db', JSON.stringify(newData));
+      handleFirestoreError(e, OperationType.WRITE, 'appData/main');
     }
   };
 
@@ -221,21 +332,7 @@ const App: React.FC = () => {
           </div>
         );
       case Tab.Report:
-        return isOperator || userRole === 'Kepala Sekolah' || userRole === 'Guru' ? (
-          <ReportView data={data} updateData={updateAppData} />
-        ) : (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-            <ShieldCheck size={64} className="text-slate-300 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-800">Akses Terbatas</h2>
-            <p className="text-slate-500 mb-6">Hanya Operator, Kepala Sekolah, dan Guru yang dapat mengakses menu laporan.</p>
-            <button 
-              onClick={() => setShowLoginModal(true)}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-            >
-              Login Sekarang
-            </button>
-          </div>
-        );
+        return <ReportView data={data} updateData={updateAppData} />;
       default:
         return null;
     }
@@ -321,7 +418,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col">
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-14 sm:h-16">
@@ -485,6 +583,7 @@ const App: React.FC = () => {
         <p>&copy; {new Date().getFullYear()} Siswa Terlambat Hadir</p>
       </footer>
     </div>
+    </ErrorBoundary>
   );
 };
 
