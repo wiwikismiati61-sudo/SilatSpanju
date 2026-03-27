@@ -95,14 +95,15 @@ const INITIAL_DATA: AppData = {
   user: {
     username: 'admin',
     password: 'admin123'
-  }
+  },
+  users: []
 };
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Dashboard);
   const [data, setData] = useState<AppData>(INITIAL_DATA);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [loginForm, setLoginForm] = useState({ username: '', password: '', role: 'Operator' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -111,7 +112,8 @@ const App: React.FC = () => {
   const [firebaseErrorDetail, setFirebaseErrorDetail] = useState<string | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<any>(null);
 
-  const isOperator = userRole === 'Operator';
+  const isOperator = userRole === 'Full Acces';
+  const canAccessAbsensi = userRole === 'Full Acces' || userRole === 'Entry data';
   const isAuthenticated = userRole !== null;
 
   const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
@@ -254,18 +256,23 @@ const App: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.role === 'Operator') {
-      if (loginForm.username === data.user.username && loginForm.password === data.user.password) {
-        setUserRole('Operator');
-        setShowLoginModal(false);
-        setLoginForm({ username: '', password: '', role: 'Operator' });
-      } else {
-        alert("Username atau Password salah!");
-      }
-    } else {
-      setUserRole(loginForm.role);
+    
+    // Check master admin
+    if (loginForm.username === data.user.username && loginForm.password === data.user.password) {
+      setUserRole('Full Acces');
       setShowLoginModal(false);
-      setLoginForm({ username: '', password: '', role: 'Operator' });
+      setLoginForm({ username: '', password: '' });
+      return;
+    }
+
+    // Check additional users
+    const foundUser = (data.users || []).find(u => u.username === loginForm.username && u.password === loginForm.password);
+    if (foundUser) {
+      setUserRole(foundUser.role);
+      setShowLoginModal(false);
+      setLoginForm({ username: '', password: '' });
+    } else {
+      alert("Username atau Password salah!");
     }
   };
 
@@ -300,13 +307,13 @@ const App: React.FC = () => {
       case Tab.Dashboard:
         return <DashboardView data={data} currentTime={currentTime} isLoggedIn={isOperator} updateData={updateAppData} />;
       case Tab.Absensi:
-        return isAuthenticated ? (
+        return canAccessAbsensi ? (
           <AbsensiView data={data} onAddRecord={(record) => updateAppData({ attendance: [record, ...data.attendance] })} />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
             <ShieldCheck size={64} className="text-slate-300 mb-4" />
             <h2 className="text-2xl font-bold text-slate-800">Akses Terbatas</h2>
-            <p className="text-slate-500 mb-6">Silakan login terlebih dahulu untuk melakukan absensi.</p>
+            <p className="text-slate-500 mb-6">Silakan login dengan akses Entry data atau Full Acces untuk melakukan absensi.</p>
             <button 
               onClick={() => setShowLoginModal(true)}
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
@@ -525,48 +532,29 @@ const App: React.FC = () => {
                 <ShieldCheck size={32} />
               </div>
               <h2 className="text-2xl font-bold text-slate-900">Login Sistem</h2>
-              <p className="text-slate-500">Pilih peran Anda untuk masuk</p>
+              <p className="text-slate-500">Masukkan username dan password Anda</p>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Masuk Sebagai</label>
-                <select 
-                  value={loginForm.role}
-                  onChange={(e) => setLoginForm({ ...loginForm, role: e.target.value })}
+                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                <input 
+                  type="text" 
+                  required
+                  value={loginForm.username}
+                  onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                >
-                  <option value="Operator">Operator</option>
-                  <option value="Kepala Sekolah">Kepala Sekolah</option>
-                  <option value="Guru">Guru</option>
-                  <option value="Orang Tua">Orang Tua</option>
-                  <option value="Siswa">Siswa</option>
-                </select>
+                />
               </div>
-              
-              {loginForm.role === 'Operator' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={loginForm.username}
-                      onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <input 
-                      type="password" 
-                      required
-                      value={loginForm.password}
-                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
-                    />
-                  </div>
-                </>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <input 
+                  type="password" 
+                  required
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                />
+              </div>
               
               <button 
                 type="submit"

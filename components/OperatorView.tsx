@@ -20,12 +20,17 @@ interface Props {
 }
 
 const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
-  const [currentSubTab, setCurrentSubTab] = useState<'students' | 'account' | 'database'>('students');
+  const [currentSubTab, setCurrentSubTab] = useState<'students' | 'account' | 'users' | 'database'>('students');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [newStudent, setNewStudent] = useState({ name: '', className: CLASSES[0] });
   const [accountForm, setAccountForm] = useState({ ...data.user });
+  
+  // User Management State
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'Hanya Melihat' });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -166,7 +171,8 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
         const finalData: AppData = {
           students: mappedStudents,
           attendance: mappedAttendance,
-          user: mappedUser
+          user: mappedUser,
+          users: rawData.users || []
         };
 
         updateData(finalData);
@@ -192,6 +198,31 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
     }
   };
 
+  const handleAddUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    const users = data.users || [];
+    if (editingUser) {
+      updateData({
+        users: users.map(u => u.id === editingUser.id ? { ...editingUser, ...newUser } : u)
+      });
+      setEditingUser(null);
+    } else {
+      const user = {
+        id: crypto.randomUUID(),
+        ...newUser
+      };
+      updateData({ users: [...users, user] });
+    }
+    setNewUser({ username: '', password: '', role: 'Hanya Melihat' });
+    setShowUserModal(false);
+  };
+
+  const handleDeleteUser = (id: string) => {
+    if (confirm("Hapus user ini?")) {
+      updateData({ users: (data.users || []).filter(u => u.id !== id) });
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 sm:pb-4 gap-3">
@@ -210,7 +241,13 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
             onClick={() => setCurrentSubTab('account')}
             className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap ${currentSubTab === 'account' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
           >
-            Setup Login
+            Master Admin
+          </button>
+          <button 
+            onClick={() => setCurrentSubTab('users')}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap ${currentSubTab === 'users' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}
+          >
+            Manajemen User
           </button>
           <button 
             onClick={() => setCurrentSubTab('database')}
@@ -299,7 +336,7 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
         <div className="max-w-md mx-auto py-8">
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Settings className="text-indigo-600" size={24} /> Edit Akun Operator
+              <Settings className="text-indigo-600" size={24} /> Edit Akun Master Admin
             </h3>
             <form onSubmit={(e) => { e.preventDefault(); updateData({ user: accountForm }); alert("Akun diperbarui!"); }} className="space-y-4">
               <div>
@@ -327,6 +364,70 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
                 Simpan Perubahan
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {currentSubTab === 'users' && (
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-slate-800">Daftar User</h3>
+            <button 
+              onClick={() => { setEditingUser(null); setNewUser({ username: '', password: '', role: 'Hanya Melihat' }); setShowUserModal(true); }}
+              className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition text-sm"
+            >
+              <UserPlus size={16} className="mr-2" /> Tambah User
+            </button>
+          </div>
+          
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-700 font-bold">
+                <tr>
+                  <th className="px-6 py-4">Username</th>
+                  <th className="px-6 py-4">Role / Akses</th>
+                  <th className="px-6 py-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {(data.users || []).length > 0 ? (
+                  (data.users || []).map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4 font-bold text-slate-900">{u.username}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          u.role === 'Full Acces' ? 'bg-purple-100 text-purple-700' :
+                          u.role === 'Entry data' ? 'bg-blue-100 text-blue-700' :
+                          'bg-slate-100 text-slate-700'
+                        }`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => { setEditingUser(u); setNewUser({ username: u.username, password: u.password, role: u.role }); setShowUserModal(true); }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-12 text-center text-slate-400">Belum ada user tambahan.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -407,6 +508,51 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-3 border border-slate-200 font-bold rounded-lg">Batal</button>
+                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-lg">Simpan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showUserModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">{editingUser ? 'Edit User' : 'Tambah User Baru'}</h2>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                <input 
+                  type="text" 
+                  required
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={newUser.username}
+                  onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <input 
+                  type="text" 
+                  required
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Hak Akses</label>
+                <select 
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none"
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                >
+                  <option value="Hanya Melihat">Hanya Melihat</option>
+                  <option value="Entry data">Entry data</option>
+                  <option value="Full Acces">Full Acces</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setShowUserModal(false)} className="flex-1 py-3 border border-slate-200 font-bold rounded-lg">Batal</button>
                 <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-lg">Simpan</button>
               </div>
             </form>

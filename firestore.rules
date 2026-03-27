@@ -24,11 +24,12 @@ service cloud.firestore {
     }
 
     function isValidAppData(data) {
-      return data.keys().hasAll(['students', 'attendance', 'settings', 'user']) &&
+      return data.keys().hasAll(['students', 'attendance', 'user']) &&
              data.students is list &&
              data.attendance is list &&
-             data.settings is map &&
-             data.user is map;
+             data.user is map &&
+             (!('settings' in data) || data.settings is map) &&
+             (!('users' in data) || data.users is list);
     }
 
     match /appData/main {

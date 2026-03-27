@@ -20,9 +20,13 @@
         "user": {
           "type": "object",
           "description": "User credentials for the operator."
+        },
+        "users": {
+          "type": "array",
+          "description": "List of additional users with their roles."
         }
       },
-      "required": ["students", "attendance", "settings", "user"]
+      "required": ["students", "attendance", "user"]
     }
   },
   "firestore": {

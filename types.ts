@@ -21,10 +21,20 @@ export interface AppUser {
   password: string;
 }
 
+export type UserRole = 'Hanya Melihat' | 'Entry data' | 'Full Acces';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  password: string;
+  role: UserRole;
+}
+
 export interface AppData {
   students: Student[];
   attendance: AttendanceRecord[];
   user: AppUser;
+  users?: UserAccount[];
 }
 
 export enum Tab {
