@@ -36,8 +36,10 @@ app.post('/api/data', async (req, res) => {
     const data = req.body;
     if (isKvConfigured()) {
       await kv.set('absensi_db', data);
-    } else {
+    } else if (process.env.NODE_ENV !== 'production') {
       fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(data, null, 2));
+    } else {
+      throw new Error('KV is not configured and filesystem is read-only in production');
     }
     res.json({ success: true });
   } catch (error) {

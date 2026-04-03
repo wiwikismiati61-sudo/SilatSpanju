@@ -312,12 +312,24 @@ const ReportView: React.FC<Props> = ({ data }) => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleExportToPDF = () => {
+  const handleExportToPDF = async () => {
     const doc = new jsPDF();
     
     // Header
-    const logoUrl = "https://iili.io/KDFk4fI.png";
-    doc.addImage(logoUrl, 'PNG', 15, 10, 20, 20);
+    try {
+      const logoUrl = "https://iili.io/KDFk4fI.png";
+      const response = await fetch(logoUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      const logoBase64 = await base64Promise;
+      doc.addImage(logoBase64, 'PNG', 15, 10, 20, 20);
+    } catch (e) {
+      console.error("Failed to add logo to PDF", e);
+    }
     
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
