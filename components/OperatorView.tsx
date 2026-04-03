@@ -436,7 +436,7 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 py-2 sm:py-4">
           <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm">
             <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
-              <Database className="text-indigo-600" size={20} className="sm:w-6 sm:h-6" /> Backup & Restore
+              <Database className="text-indigo-600 sm:w-6 sm:h-6" size={20} /> Backup & Restore
             </h3>
             <div className="space-y-3 sm:space-y-4">
               <button 

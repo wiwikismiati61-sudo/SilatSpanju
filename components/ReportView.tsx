@@ -10,8 +10,11 @@ import {
   ResponsiveContainer,
   LabelList
 } from 'recharts';
-import { Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { AppData, CLASSES, AttendanceRecord } from '../types';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import ExcelJS from 'exceljs';
 
 interface Props {
   data: AppData;
@@ -135,33 +138,290 @@ const ReportView: React.FC<Props> = ({ data }) => {
   }, [lateStudentsInClass, selectedClass, selectedMonth]);
 
 
-  const handleExportToExcel = () => {
-    const reportSheetData = lateStudentsInClass.map(record => ({
-      "NAMA SISWA": record.studentName,
-      "KELAS": record.className,
-      "TANGGAL": new Date(record.date).toISOString().split('T')[0],
-      "JAM": record.time,
-      "STATUS": record.status,
-      "ALASAN": record.reason || '-',
-    }));
+  const handleExportToExcel = async () => {
+    const today = new Date();
+    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const dateStr = `Pasuruan, ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`Report ${selectedClass}`);
+
+    // Set column widths
+    worksheet.columns = [
+      { header: '', key: 'A', width: 40 },
+      { header: '', key: 'B', width: 10 },
+      { header: '', key: 'C', width: 15 },
+      { header: '', key: 'D', width: 10 },
+      { header: '', key: 'E', width: 15 },
+      { header: '', key: 'F', width: 30 },
+    ];
+
+    // Add Logo
+    try {
+      const logoUrl = "https://iili.io/KDFk4fI.png";
+      const response = await fetch(logoUrl);
+      const buffer = await response.arrayBuffer();
+      const logoId = workbook.addImage({
+        buffer: buffer,
+        extension: 'png',
+      });
+      
+      // Left Logo
+      worksheet.addImage(logoId, {
+        tl: { col: 0.2, row: 0.2 },
+        ext: { width: 80, height: 80 }
+      });
+    } catch (e) {
+      console.error("Failed to add logo to Excel", e);
+    }
+
+    // Header Text
+    const headerRows = [
+      ["PEMERINTAH KOTA PASURUAN"],
+      ["SMP NEGERI 7"],
+      ["Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139"],
+      ["Telepon (0343) 426845"],
+      ["Pos-el smp7pas@yahoo.co.id , Laman www.smpn7pasuruan.sch.id"],
+    ];
+
+    headerRows.forEach((row, index) => {
+      const cell = worksheet.getCell(index + 1, 1);
+      cell.value = row[0];
+      worksheet.mergeCells(index + 1, 1, index + 1, 6);
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      if (index === 0) cell.font = { size: 14, bold: true };
+      if (index === 1) cell.font = { size: 18, bold: true };
+      if (index > 1) cell.font = { size: 10 };
+      if (index === 4) cell.font = { size: 9, italic: true };
+    });
+
+    // Thick Blue Line
+    const lineRow = worksheet.getRow(6);
+    lineRow.height = 5;
+    for (let i = 1; i <= 6; i++) {
+      const cell = lineRow.getCell(i);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A90E2' }
+      };
+    }
+
+    // Report Title
+    const titleCell = worksheet.getCell(8, 1);
+    titleCell.value = "Laporan Siswa Terlambat Hadir";
+    worksheet.mergeCells(8, 1, 8, 6);
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    titleCell.font = { size: 24, bold: true };
+    worksheet.getRow(8).height = 40;
+
+    // Table Headers
+    const headerRow = worksheet.getRow(10);
+    const headers = ["NAMA SISWA", "KELAS", "TANGGAL", "JAM", "STATUS", "ALASAN"];
+    headers.forEach((h, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = h;
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF4A90E2' }
+      };
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      };
+    });
+    headerRow.height = 25;
+
+    // Table Data
+    lateStudentsInClass.forEach((record, index) => {
+      const row = worksheet.getRow(11 + index);
+      const rowData = [
+        record.studentName.toUpperCase(),
+        record.className,
+        new Date(record.date).toISOString().split('T')[0],
+        record.time,
+        record.status,
+        record.reason || '-'
+      ];
+      
+      rowData.forEach((val, i) => {
+        const cell = row.getCell(i + 1);
+        cell.value = val;
+        cell.alignment = { vertical: 'middle', horizontal: i === 0 ? 'left' : 'center' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+        // Alternating row colors
+        if (index % 2 === 1) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF0F8FF' }
+          };
+        }
+      });
+    });
+
+    // Auto Filter
+    worksheet.autoFilter = {
+      from: { row: 10, column: 1 },
+      to: { row: 10 + lateStudentsInClass.length, column: 6 }
+    };
+
+    // Signature Section
+    const footerStartRow = 11 + lateStudentsInClass.length + 2;
     
-    const chartSheetData = chartData.map(item => ({
-      'Kelas': item.name,
-      'Jumlah Terlambat': item.Total
-    }));
+    // Mengetahui
+    worksheet.getCell(footerStartRow, 1).value = "Mengetahui";
+    worksheet.getCell(footerStartRow + 1, 1).value = "Kepala Sekolah";
+    worksheet.getCell(footerStartRow + 5, 1).value = "NUR FADILAH, S.Pd";
+    worksheet.getCell(footerStartRow + 5, 1).font = { bold: true, underline: true };
+    worksheet.getCell(footerStartRow + 6, 1).value = "NIP. 19860410 201001 2 030";
+
+    // Guru BK
+    worksheet.getCell(footerStartRow, 5).value = dateStr;
+    worksheet.getCell(footerStartRow + 1, 5).value = "Guru BK";
+    worksheet.getCell(footerStartRow + 5, 5).value = "WIWIK ISMIATI, S.Pd";
+    worksheet.getCell(footerStartRow + 5, 5).font = { bold: true, underline: true };
+    worksheet.getCell(footerStartRow + 6, 5).value = "NIP. 19831116 200904 2 003";
+
+    // Center signature text
+    for (let r = footerStartRow; r <= footerStartRow + 6; r++) {
+      worksheet.getCell(r, 1).alignment = { horizontal: 'center' };
+      worksheet.getCell(r, 5).alignment = { horizontal: 'center' };
+      worksheet.mergeCells(r, 1, r, 2);
+      worksheet.mergeCells(r, 5, r, 6);
+    }
+
+    // Generate and download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Report_Terlambat_${selectedClass}_${selectedMonth}.xlsx`;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportToPDF = () => {
+    const doc = new jsPDF();
+    
+    // Header
+    const logoUrl = "https://iili.io/KDFk4fI.png";
+    doc.addImage(logoUrl, 'PNG', 15, 10, 20, 20);
+    
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("PEMERINTAH KOTA PASURUAN", 105, 15, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text("SMP NEGERI 7", 105, 22, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139", 105, 28, { align: 'center' });
+    doc.text("Telepon (0343) 426845", 105, 33, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "italic");
+    doc.text("Pos-el smp7pas@yahoo.co.id , Laman www.smpn7pasuruan.sch.id", 105, 38, { align: 'center' });
+    
+    doc.setLineWidth(0.5);
+    doc.line(15, 42, 195, 42);
+    doc.setLineWidth(0.2);
+    doc.line(15, 43, 195, 43);
+    
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Laporan Siswa Terlambat Hadir", 105, 55, { align: 'center' });
+    
+    const tableData = lateStudentsInClass.map(record => [
+      record.studentName.toUpperCase(),
+      record.className,
+      new Date(record.date).toISOString().split('T')[0],
+      record.time,
+      record.status,
+      record.reason || '-'
+    ]);
 
     // @ts-ignore
-    const reportWS = XLSX.utils.json_to_sheet(reportSheetData);
+    autoTable(doc, {
+      startY: 65,
+      head: [['NAMA SISWA', 'KELAS', 'TANGGAL', 'JAM', 'STATUS', 'ALASAN']],
+      body: tableData,
+      headStyles: { 
+        fillColor: [74, 144, 226], 
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        fontSize: 9,
+        valign: 'middle'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 248, 255]
+      },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 15, halign: 'center' },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 15, halign: 'center' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 'auto' }
+      },
+      margin: { top: 65 }
+    });
+
     // @ts-ignore
-    const chartWS = XLSX.utils.json_to_sheet(chartSheetData);
-    // @ts-ignore
-    const wb = XLSX.utils.book_new();
-    // @ts-ignore
-    XLSX.utils.book_append_sheet(wb, reportWS, `Report ${selectedClass}`);
-    // @ts-ignore
-    XLSX.utils.book_append_sheet(wb, chartWS, "Rekap Total per Kelas");
-    // @ts-ignore
-    XLSX.writeFile(wb, `Report_Terlambat_${selectedClass}_${selectedMonth}.xlsx`);
+    const finalY = doc.lastAutoTable.finalY || 65;
+    const signatureY = finalY + 20;
+
+    // Check if signature section fits on the page
+    if (signatureY + 40 > 280) {
+      doc.addPage();
+      // Reset signatureY for the new page
+    }
+
+    const currentY = signatureY + 40 > 280 ? 30 : signatureY;
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    
+    // Left side: Kepala Sekolah
+    doc.text("Mengetahui", 35, currentY, { align: 'center' });
+    doc.text("Kepala Sekolah", 35, currentY + 5, { align: 'center' });
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("NUR FADILAH, S.Pd", 35, currentY + 30, { align: 'center' });
+    doc.line(15, currentY + 31, 55, currentY + 31);
+    doc.setFont("helvetica", "normal");
+    doc.text("NIP. 19860410 201001 2 030", 35, currentY + 36, { align: 'center' });
+
+    // Right side: Guru BK
+    const today = new Date();
+    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const dateStr = `Pasuruan, ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+    
+    doc.text(dateStr, 165, currentY, { align: 'center' });
+    doc.text("Guru BK", 165, currentY + 5, { align: 'center' });
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("WIWIK ISMIATI, S.Pd", 165, currentY + 30, { align: 'center' });
+    doc.line(145, currentY + 31, 185, currentY + 31);
+    doc.setFont("helvetica", "normal");
+    doc.text("NIP. 19831116 200904 2 003", 165, currentY + 36, { align: 'center' });
+
+    doc.save(`Laporan_Terlambat_${selectedClass}_${selectedMonth}.pdf`);
   };
 
   return (
@@ -171,12 +431,20 @@ const ReportView: React.FC<Props> = ({ data }) => {
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Report Siswa Terlambat</h2>
           <p className="text-slate-500 text-xs sm:text-sm">Rekapitulasi keterlambatan siswa per kelas</p>
         </div>
-        <button 
-          onClick={handleExportToExcel}
-          className="flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-100"
-        >
-          <Download size={16} className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" /> Download Laporan (.xlsx)
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button 
+            onClick={handleExportToExcel}
+            className="flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-100"
+          >
+            <Download size={16} className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" /> Download (.xlsx)
+          </button>
+          <button 
+            onClick={handleExportToPDF}
+            className="flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs sm:text-sm hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
+          >
+            <FileText size={16} className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" /> Download (.pdf)
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">

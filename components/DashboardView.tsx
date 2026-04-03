@@ -1,7 +1,8 @@
 
 import React, { useMemo, useState, useRef } from 'react';
 import { Users, UserX, Clock, CalendarCheck, PhoneCall, CheckCircle2, Edit2, Trash2, Download, Upload, AlertTriangle } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
+import ExcelJS from 'exceljs';
 import { AppData, Student, AttendanceRecord } from '../types';
 
 interface Props {
@@ -229,7 +230,26 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
     return { report, rawRecords: weeklyRecords };
   }, [attendance, selectedDate]);
 
-  const downloadWeeklyReport = () => {
+  const getBase64FromUrl = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error("Error fetching image for Excel:", error);
+      return "";
+    }
+  };
+
+  const downloadWeeklyReport = async () => {
     const allRecords = weeklyData.rawRecords;
     
     if (allRecords.length === 0) {
@@ -237,39 +257,244 @@ const DashboardView: React.FC<Props> = ({ data, currentTime, isLoggedIn, updateD
       return;
     }
 
-    const excelData = allRecords.map(r => ({
-      'Tanggal': new Date(r.date).toLocaleDateString('id-ID'),
-      'Waktu': r.time,
-      'Nama Siswa': r.studentName,
-      'Kelas': r.className,
-      'Alasan': r.reason || '-'
-    }));
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Laporan Mingguan');
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Mingguan");
-    XLSX.writeFile(wb, `Laporan_Mingguan_Terlambat_${new Date(selectedDate).toLocaleDateString('id-ID').replace(/\//g, '-')}.xlsx`);
+    // Set column widths
+    worksheet.columns = [
+      { width: 5 },  // No.
+      { width: 40 }, // Nama Siswa
+      { width: 10 }, // Kelas
+      { width: 15 }, // Tanggal
+      { width: 10 }, // Jam
+      { width: 15 }, // Status
+      { width: 30 }, // Alasan
+    ];
+
+    // Header Rows
+    const headerRows = [
+      ["PEMERINTAH KOTA PASURUAN"],
+      ["SMP NEGERI 7"],
+      ["Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139"],
+      ["Telepon (0343) 426845"],
+      ["Pos-el smp7pas@yahoo.co.id , Laman www.smpn7pasuruan.sch.id"],
+      [""],
+      ["Laporan Siswa Terlambat Hadir (Mingguan)"],
+      [""],
+      ["No.", "NAMA SISWA", "KELAS", "TANGGAL", "JAM", "STATUS", "ALASAN"]
+    ];
+
+    headerRows.forEach((row, i) => {
+      const r = worksheet.addRow(row);
+      if (i < 5 || i === 6) {
+        worksheet.mergeCells(i + 1, 1, i + 1, 7);
+        r.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (i < 2) {
+          r.font = { bold: true, size: 14 };
+        } else if (i === 6) {
+          r.font = { bold: true, size: 18 };
+        } else {
+          r.font = { size: 10 };
+        }
+      }
+      if (i === 8) {
+        r.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4F81BD' }
+          };
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      }
+    });
+
+    // Add Data
+    allRecords.forEach((r, index) => {
+      const row = worksheet.addRow([
+        index + 1,
+        r.studentName,
+        r.className,
+        new Date(r.date).toLocaleDateString('id-ID'),
+        r.time,
+        r.status,
+        r.reason || '-'
+      ]);
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+
+    // Add Logos
+    const logoLeftBase64 = await getBase64FromUrl('input_file_0.png');
+    const logoRightBase64 = await getBase64FromUrl('input_file_1.png');
+
+    if (logoLeftBase64) {
+      const imageId1 = workbook.addImage({
+        base64: logoLeftBase64,
+        extension: 'png',
+      });
+      worksheet.addImage(imageId1, {
+        tl: { col: 0.2, row: 0.2 },
+        ext: { width: 60, height: 60 }
+      });
+    }
+
+    if (logoRightBase64) {
+      const imageId2 = workbook.addImage({
+        base64: logoRightBase64,
+        extension: 'png',
+      });
+      worksheet.addImage(imageId2, {
+        tl: { col: 6.2, row: 0.2 },
+        ext: { width: 60, height: 60 }
+      });
+    }
+
+    // Write to file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Laporan_Mingguan_Terlambat_${new Date(selectedDate).toLocaleDateString('id-ID').replace(/\//g, '-')}.xlsx`;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   };
 
-  const downloadDailyReport = () => {
+  const downloadDailyReport = async () => {
     if (todayAttendance.length === 0) {
       alert('Tidak ada data absensi untuk tanggal ini.');
       return;
     }
 
-    const excelData = todayAttendance.map(r => ({
-      'Tanggal': new Date(r.date).toLocaleDateString('id-ID'),
-      'Waktu': r.time,
-      'Nama Siswa': r.studentName,
-      'Kelas': r.className,
-      'Status': r.status,
-      'Alasan': r.reason || '-'
-    }));
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Laporan Harian');
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Harian");
-    XLSX.writeFile(wb, `Laporan_Harian_${new Date(dailyReportDate).toLocaleDateString('id-ID').replace(/\//g, '-')}.xlsx`);
+    // Set column widths
+    worksheet.columns = [
+      { width: 5 },  // No.
+      { width: 40 }, // Nama Siswa
+      { width: 10 }, // Kelas
+      { width: 15 }, // Tanggal
+      { width: 10 }, // Jam
+      { width: 15 }, // Status
+      { width: 30 }, // Alasan
+    ];
+
+    // Header Rows
+    const headerRows = [
+      ["PEMERINTAH KOTA PASURUAN"],
+      ["SMP NEGERI 7"],
+      ["Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139"],
+      ["Telepon (0343) 426845"],
+      ["Pos-el smp7pas@yahoo.co.id , Laman www.smpn7pasuruan.sch.id"],
+      [""],
+      ["Laporan Siswa Terlambat Hadir"],
+      [""],
+      ["No.", "NAMA SISWA", "KELAS", "TANGGAL", "JAM", "STATUS", "ALASAN"]
+    ];
+
+    headerRows.forEach((row, i) => {
+      const r = worksheet.addRow(row);
+      if (i < 5 || i === 6) {
+        worksheet.mergeCells(i + 1, 1, i + 1, 7);
+        r.alignment = { horizontal: 'center', vertical: 'middle' };
+        if (i < 2) {
+          r.font = { bold: true, size: 14 };
+        } else if (i === 6) {
+          r.font = { bold: true, size: 18 };
+        } else {
+          r.font = { size: 10 };
+        }
+      }
+      if (i === 8) {
+        r.eachCell((cell) => {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4F81BD' }
+          };
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      }
+    });
+
+    // Add Data
+    todayAttendance.forEach((r, index) => {
+      const row = worksheet.addRow([
+        index + 1,
+        r.studentName,
+        r.className,
+        new Date(r.date).toLocaleDateString('id-ID'),
+        r.time,
+        r.status,
+        r.reason || '-'
+      ]);
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+
+    // Add Logos
+    const logoLeftBase64 = await getBase64FromUrl('input_file_0.png');
+    const logoRightBase64 = await getBase64FromUrl('input_file_1.png');
+
+    if (logoLeftBase64) {
+      const imageId1 = workbook.addImage({
+        base64: logoLeftBase64,
+        extension: 'png',
+      });
+      worksheet.addImage(imageId1, {
+        tl: { col: 0.2, row: 0.2 },
+        ext: { width: 60, height: 60 }
+      });
+    }
+
+    if (logoRightBase64) {
+      const imageId2 = workbook.addImage({
+        base64: logoRightBase64,
+        extension: 'png',
+      });
+      worksheet.addImage(imageId2, {
+        tl: { col: 6.2, row: 0.2 },
+        ext: { width: 60, height: 60 }
+      });
+    }
+
+    // Write to file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Laporan_Harian_${new Date(dailyReportDate).toLocaleDateString('id-ID').replace(/\//g, '-')}.xlsx`;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
