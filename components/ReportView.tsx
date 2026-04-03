@@ -14,7 +14,7 @@ import { Download, FileText } from 'lucide-react';
 import { AppData, CLASSES, AttendanceRecord } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
+import * as ExcelJS from 'exceljs';
 
 interface Props {
   data: AppData;
