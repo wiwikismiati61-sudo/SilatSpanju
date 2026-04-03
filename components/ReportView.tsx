@@ -10,10 +10,8 @@ import {
   ResponsiveContainer,
   LabelList
 } from 'recharts';
-import { Download, FileText } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { AppData, CLASSES, AttendanceRecord } from '../types';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import * as ExcelJS from 'exceljs';
 
 interface Props {
@@ -312,130 +310,6 @@ const ReportView: React.FC<Props> = ({ data }) => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleExportToPDF = async () => {
-    const doc = new jsPDF();
-    
-    // Header
-    try {
-      const logoUrl = "https://iili.io/KDFk4fI.png";
-      const response = await fetch(logoUrl);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-      const logoBase64 = await base64Promise;
-      doc.addImage(logoBase64, 'PNG', 15, 10, 20, 20);
-    } catch (e) {
-      console.error("Failed to add logo to PDF", e);
-    }
-    
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("PEMERINTAH KOTA PASURUAN", 105, 15, { align: 'center' });
-    doc.setFontSize(16);
-    doc.text("SMP NEGERI 7", 105, 22, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139", 105, 28, { align: 'center' });
-    doc.text("Telepon (0343) 426845", 105, 33, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "italic");
-    doc.text("Pos-el smp7pas@yahoo.co.id , Laman www.smpn7pasuruan.sch.id", 105, 38, { align: 'center' });
-    
-    doc.setLineWidth(0.5);
-    doc.line(15, 42, 195, 42);
-    doc.setLineWidth(0.2);
-    doc.line(15, 43, 195, 43);
-    
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("Laporan Siswa Terlambat Hadir", 105, 55, { align: 'center' });
-    
-    const tableData = lateStudentsInClass.map(record => [
-      record.studentName.toUpperCase(),
-      record.className,
-      new Date(record.date).toISOString().split('T')[0],
-      record.time,
-      record.status,
-      record.reason || '-'
-    ]);
-
-    // @ts-ignore
-    autoTable(doc, {
-      startY: 65,
-      head: [['NAMA SISWA', 'KELAS', 'TANGGAL', 'JAM', 'STATUS', 'ALASAN']],
-      body: tableData,
-      headStyles: { 
-        fillColor: [74, 144, 226], 
-        textColor: [255, 255, 255],
-        fontSize: 10,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      bodyStyles: {
-        fontSize: 9,
-        valign: 'middle'
-      },
-      alternateRowStyles: {
-        fillColor: [240, 248, 255]
-      },
-      columnStyles: {
-        0: { cellWidth: 50 },
-        1: { cellWidth: 15, halign: 'center' },
-        2: { cellWidth: 25, halign: 'center' },
-        3: { cellWidth: 15, halign: 'center' },
-        4: { cellWidth: 20, halign: 'center' },
-        5: { cellWidth: 'auto' }
-      },
-      margin: { top: 65 }
-    });
-
-    // @ts-ignore
-    const finalY = doc.lastAutoTable.finalY || 65;
-    const signatureY = finalY + 20;
-
-    // Check if signature section fits on the page
-    if (signatureY + 40 > 280) {
-      doc.addPage();
-      // Reset signatureY for the new page
-    }
-
-    const currentY = signatureY + 40 > 280 ? 30 : signatureY;
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    
-    // Left side: Kepala Sekolah
-    doc.text("Mengetahui", 35, currentY, { align: 'center' });
-    doc.text("Kepala Sekolah", 35, currentY + 5, { align: 'center' });
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("NUR FADILAH, S.Pd", 35, currentY + 30, { align: 'center' });
-    doc.line(15, currentY + 31, 55, currentY + 31);
-    doc.setFont("helvetica", "normal");
-    doc.text("NIP. 19860410 201001 2 030", 35, currentY + 36, { align: 'center' });
-
-    // Right side: Guru BK
-    const today = new Date();
-    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    const dateStr = `Pasuruan, ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
-    
-    doc.text(dateStr, 165, currentY, { align: 'center' });
-    doc.text("Guru BK", 165, currentY + 5, { align: 'center' });
-    
-    doc.setFont("helvetica", "bold");
-    doc.text("WIWIK ISMIATI, S.Pd", 165, currentY + 30, { align: 'center' });
-    doc.line(145, currentY + 31, 185, currentY + 31);
-    doc.setFont("helvetica", "normal");
-    doc.text("NIP. 19831116 200904 2 003", 165, currentY + 36, { align: 'center' });
-
-    doc.save(`Laporan_Terlambat_${selectedClass}_${selectedMonth}.pdf`);
-  };
-
   return (
     <div className="space-y-4 sm:space-y-6 animate-fadeIn">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
@@ -449,12 +323,6 @@ const ReportView: React.FC<Props> = ({ data }) => {
             className="flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs sm:text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-100"
           >
             <Download size={16} className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" /> Download (.xlsx)
-          </button>
-          <button 
-            onClick={handleExportToPDF}
-            className="flex items-center justify-center px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs sm:text-sm hover:bg-indigo-700 transition shadow-lg shadow-indigo-100"
-          >
-            <FileText size={16} className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" /> Download (.pdf)
           </button>
         </div>
       </div>

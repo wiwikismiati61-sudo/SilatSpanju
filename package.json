@@ -16,8 +16,6 @@
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "firebase": "^10.11.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.378.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
