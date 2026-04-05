@@ -113,14 +113,35 @@ const App: React.FC = () => {
   const [firebaseError, setFirebaseError] = useState<string | null>(null);
   const [firebaseErrorDetail, setFirebaseErrorDetail] = useState<string | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<any>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
 
   const isOperator = userRole === 'Full Acces';
   const canAccessAbsensi = userRole === 'Full Acces' || userRole === 'Entry data';
   const isAuthenticated = userRole !== null;
 
   const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Handle Quota Exceeded gracefully
+    if (errorMessage.includes('Quota exceeded') || errorMessage.includes('quota metric') || errorMessage.includes('8 RESOURCE_EXHAUSTED')) {
+      console.warn("Firestore Quota Exceeded. Switching to Offline Mode (Local Storage).");
+      setQuotaExceeded(true);
+      setIsFirebaseLoaded(true);
+      
+      // Load from local storage if not already loaded
+      const savedData = localStorage.getItem('absensi_db');
+      if (savedData) {
+        try {
+          setData(JSON.parse(savedData));
+        } catch (err) {
+          console.error("Failed to parse local data during quota fallback", err);
+        }
+      }
+      return; // Don't throw, let the app continue in offline mode
+    }
+
     const errInfo: FirestoreErrorInfo = {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
       authInfo: {
         userId: auth.currentUser?.uid,
         email: auth.currentUser?.email,
@@ -179,53 +200,50 @@ const App: React.FC = () => {
 
     const docRef = doc(db, 'appData', 'main');
 
-    // First check if we need to migrate local data to Firebase
-    const migrateLocalData = async () => {
-      try {
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) {
-          // Firebase is empty, check local storage
-          const savedData = localStorage.getItem('absensi_db');
-          if (savedData) {
+    // Set up real-time listener and handle migration if needed
+    const unsubscribe = onSnapshot(docRef, async (docSnap) => {
+      if (docSnap.exists()) {
+        const firebaseData = docSnap.data() as AppData;
+        setData(firebaseData);
+        localStorage.setItem('absensi_db', JSON.stringify(firebaseData));
+      } else {
+        // Document doesn't exist, try to migrate local data
+        console.log("Firebase document not found, checking for local data to migrate...");
+        const savedData = localStorage.getItem('absensi_db');
+        let initialDataToSave = INITIAL_DATA;
+        
+        if (savedData) {
+          try {
             const parsed = JSON.parse(savedData);
             if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-              console.log("Migrating local data to Firebase...");
-              await setDoc(docRef, parsed);
-            } else {
-              await setDoc(docRef, INITIAL_DATA);
+              initialDataToSave = parsed;
             }
-          } else {
-            await setDoc(docRef, INITIAL_DATA);
+          } catch (e) {
+            console.error("Failed to parse local data for migration", e);
           }
         }
-      } catch (e: any) {
-        console.error("Migration check failed:", e);
-        if (e?.message?.includes("Missing or insufficient permissions") || e?.code === 'permission-denied') {
-          setFirebaseError('permission-denied');
-        } else {
-          handleFirestoreError(e, OperationType.GET, 'appData/main');
+        
+        try {
+          await setDoc(docRef, initialDataToSave);
+        } catch (e: any) {
+          console.error("Failed to initialize Firebase data", e);
+          if (e?.message?.includes("Missing or insufficient permissions") || e?.code === 'permission-denied') {
+            setFirebaseError('permission-denied');
+          } else {
+            handleFirestoreError(e, OperationType.WRITE, 'appData/main');
+          }
         }
       }
-    };
-
-    migrateLocalData().then(() => {
-      // Set up real-time listener
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const firebaseData = docSnap.data() as AppData;
-          setData(firebaseData);
-          // Keep local storage updated as a fallback
-          localStorage.setItem('absensi_db', JSON.stringify(firebaseData));
-        }
+      setIsFirebaseLoaded(true);
+    }, (error: any) => {
+      console.error("Firebase listen error:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      if (errorMessage.includes('Quota exceeded') || errorMessage.includes('quota metric') || errorMessage.includes('8 RESOURCE_EXHAUSTED')) {
+        setQuotaExceeded(true);
         setIsFirebaseLoaded(true);
-      }, (error: any) => {
-        console.error("Firebase listen error:", error);
-        if (error?.message?.includes("Missing or insufficient permissions") || error?.code === 'permission-denied') {
-          setFirebaseError('permission-denied');
-        } else {
-          handleFirestoreError(error, OperationType.GET, 'appData/main');
-        }
-        // Fallback to local storage if Firebase fails
+        
+        // Fallback to local storage
         const savedData = localStorage.getItem('absensi_db');
         if (savedData) {
           try {
@@ -234,25 +252,41 @@ const App: React.FC = () => {
             console.error("Failed to parse local data", err);
           }
         }
+      } else if (error?.message?.includes("Missing or insufficient permissions") || error?.code === 'permission-denied') {
+        setFirebaseError('permission-denied');
         setIsFirebaseLoaded(true);
-      });
-
-      return () => unsubscribe();
+      } else {
+        handleFirestoreError(error, OperationType.GET, 'appData/main');
+      }
     });
-    
+
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    return () => {
+      unsubscribe();
+      clearInterval(timer);
+    };
   }, [firebaseUser]);
 
   // Save data to Firebase whenever it changes
   const saveToFirebase = async (newData: AppData) => {
+    if (quotaExceeded) {
+      localStorage.setItem('absensi_db', JSON.stringify(newData));
+      return;
+    }
+    
     try {
       await setDoc(doc(db, 'appData', 'main'), newData);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to save data to Firebase", e);
       // Fallback to local storage
       localStorage.setItem('absensi_db', JSON.stringify(newData));
-      handleFirestoreError(e, OperationType.WRITE, 'appData/main');
+      
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      if (errorMessage.includes('Quota exceeded') || errorMessage.includes('quota metric')) {
+        setQuotaExceeded(true);
+      } else {
+        handleFirestoreError(e, OperationType.WRITE, 'appData/main');
+      }
     }
   };
 
@@ -429,6 +463,18 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col">
+      {quotaExceeded && (
+        <div className="bg-orange-600 text-white px-4 py-2 text-center text-xs sm:text-sm font-bold flex items-center justify-center gap-2 animate-pulse">
+          <ShieldCheck size={16} />
+          <span>Mode Offline: Kuota harian database (Firestore) telah habis. Data Anda disimpan sementara di browser ini.</span>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="ml-2 underline hover:no-underline"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-14 sm:h-16">

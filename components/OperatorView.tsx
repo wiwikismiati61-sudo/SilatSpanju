@@ -11,7 +11,7 @@ import {
   Search,
   AlertCircle
 } from 'lucide-react';
-import { AppData, Student, AttendanceRecord, CLASSES, Tab } from '../types';
+import { AppData, Student, AttendanceRecord, CLASSES, Tab, UserRole } from '../types';
 
 interface Props {
   data: AppData;
@@ -30,7 +30,11 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
   // User Management State
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'Hanya Melihat' });
+  const [newUser, setNewUser] = useState<{ username: string, password: string, role: UserRole }>({ 
+    username: '', 
+    password: '', 
+    role: 'Hanya Melihat' 
+  });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -544,7 +548,7 @@ const OperatorView: React.FC<Props> = ({ data, updateData, setActiveTab }) => {
                 <select 
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none"
                   value={newUser.role}
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })}
                 >
                   <option value="Hanya Melihat">Hanya Melihat</option>
                   <option value="Entry data">Entry data</option>
